@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from telethon import TelegramClient, events
 from telethon.errors import UserDeactivatedBanError
 from telethon.tl.functions.channels import JoinChannelRequest
+from telethon.tl.functions.channels import ReadMessageContentsRequest
 from telethon.tl.types import Channel, User
 
 from config import channel_logins, logger
@@ -33,6 +34,7 @@ async def message_handler(event: events.NewMessage.Event, client: TelegramClient
             await client.send_message(chat, random.choice(choices), comment_to=event.message.id)
             await asyncio.sleep(180)
         except Exception as ex:
+            print(ex)
             pass
 
 
@@ -50,8 +52,8 @@ class Client:
             self.me = await db.insert_client(self.session_id)
             print(self.me)
         await asyncio.sleep(5)
-        print(await self.client.get_me())
-        await asyncio.sleep(5)
+        # self.client.add_event_handler(partial(message_handler, client=self.client), events.NewMessage())
+
         logger.info(f'{self.me.session_id} - started subscribing')
         start_time = datetime.datetime.now()
         await self.subscribe_channels()
@@ -82,7 +84,7 @@ class Client:
                         entity = await self.client.get_entity(username)
                     await self.client(JoinChannelRequest(entity))
                     await db.add_join(self.me, channel)
-                    sleep_time = random.randint(5*60, 10*60)
+                    sleep_time = random.randint(10*60, 20*60)
                     print(f'{self.me} joins {channel.username}. Sleep for {sleep_time}...')
                     await asyncio.sleep(sleep_time)
         except UserDeactivatedBanError as ex:

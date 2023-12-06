@@ -6,8 +6,8 @@ class Proxy:
         proxy_file = f.read().split('\n')
 
     def __init__(self, index):
-        self.proxy_str = self.proxy_file[index]
-        user_pass, address_port_region = self.proxy_str.split('@')
+        self.proxy_line = self.proxy_file[index]
+        user_pass, address_port_region = self.proxy_line.split('@')
         self.username, self.password = user_pass.split(':')
         self.address, self.port = address_port_region.split(':')
         self.dict = {

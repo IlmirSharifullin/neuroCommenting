@@ -1,0 +1,1733 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 16.1 (Ubuntu 16.1-1.pgdg22.04+1)
+-- Dumped by pg_dump version 16.1 (Ubuntu 16.1-1.pgdg22.04+1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: alembic_version; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.alembic_version (
+    version_num character varying(32) NOT NULL
+);
+
+
+ALTER TABLE public.alembic_version OWNER TO postgres;
+
+--
+-- Name: channel; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.channel (
+    id integer NOT NULL,
+    username character varying(255),
+    chat_id integer,
+    status integer NOT NULL
+);
+
+
+ALTER TABLE public.channel OWNER TO postgres;
+
+--
+-- Name: channel_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.channel_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.channel_id_seq OWNER TO postgres;
+
+--
+-- Name: channel_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.channel_id_seq OWNED BY public.channel.id;
+
+
+--
+-- Name: client; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.client (
+    id integer NOT NULL,
+    session_id character varying(255),
+    status integer NOT NULL
+);
+
+
+ALTER TABLE public.client OWNER TO postgres;
+
+--
+-- Name: client_channel_association; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.client_channel_association (
+    client_id integer,
+    channel_id integer
+);
+
+
+ALTER TABLE public.client_channel_association OWNER TO postgres;
+
+--
+-- Name: client_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.client_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.client_id_seq OWNER TO postgres;
+
+--
+-- Name: client_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.client_id_seq OWNED BY public.client.id;
+
+
+--
+-- Name: channel id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.channel ALTER COLUMN id SET DEFAULT nextval('public.channel_id_seq'::regclass);
+
+
+--
+-- Name: client id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.client ALTER COLUMN id SET DEFAULT nextval('public.client_id_seq'::regclass);
+
+
+--
+-- Data for Name: alembic_version; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.alembic_version (version_num) FROM stdin;
+99158877e556
+\.
+
+
+--
+-- Data for Name: channel; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.channel (id, username, chat_id, status) FROM stdin;
+504	chelnytv	1467948743	1
+505	shahrichally	1477463791	1
+8	khayrullinayrat	1784411021	1
+9	tsarofkazan	1472131537	1
+10	qozgin	1743989664	1
+11	kazan	1553717262	1
+12	kazanvkp	1325357075	1
+13	mash_iptash	1219938965	1
+14	tatarstan_republic	1766177650	1
+15	typical_kzn	1088252923	1
+16	tatmediaofficial	1190573564	1
+17	kzn_xz	1640167125	1
+18	dirtytatarstan	1054569797	1
+19	Eduvtatarstan	1132874616	1
+20	almetyevsk_1	1429044958	1
+21	city16kazan	1227979677	1
+22	kazani_chp	1656074889	1
+23	kazan_da	1428910616	1
+24	iatatarinform	1881056827	1
+25	inkazanischa	1304674804	1
+26	Kazan_ChP_DTP	1296418216	1
+27	chelnylife	1314107933	1
+28	video_tatar	1342633253	1
+29	tatartoday	1387455051	1
+30	vkazani	1104911709	1
+31	my_tat	1811826020	1
+32	kzn_official	1031959840	1
+33	aida_kazan	1889999115	1
+34	kznonline	1250277554	1
+35	newsprotatar	1404625442	1
+36	shahrikazan	1253964413	1
+37	intertatgazeta	1256201633	1
+506	mayakonline	1402648561	1
+507	selskayanovaksubaevo	1452529600	1
+508	airs16	1592293360	1
+509	zariaaleks	1591602611	1
+510	apastovonovosti	1532673808	1
+1	qwe125412	1805203089	1
+511	arskmedia	1469117007	1
+512	xezmet_gazetasi	1452635586	1
+513	verhniyuslon	1331043624	1
+514	drozzanoe90	1188705147	1
+523	ElabugaNK	1425005555	1
+524	kaibicy	1406344138	1
+525	volzhskie	1345013402	1
+526	novayakama	1443614228	1
+527	len_vesti	1304061695	1
+528	shesmauk	1252875951	1
+529	pestresy	1446493404	1
+530	rusloboda	1537299311	1
+531	sabatannars	1331246813	1
+532	sarman_rt	1200373551	1
+533	bolgarlifenews	1202765729	1
+534	TulInformm	1705350778	1
+535	n_chrmshn	1453565477	1
+536	utazinkaurussu	1700254779	1
+537	naBebelya	1251986052	1
+538	nkvknew	1180725247	1
+539	KRI4yKAZAN	1235207113	1
+540	Nizhnekamsk_polit	1839187002	1
+541	Nizhnekamskx	1384929221	1
+542	rodsovetrt	1664622320	1
+74	tatar_opershtab	1198186684	1
+75	kazan_chp116	1181578377	1
+76	podsluhano_kazan	1742578648	1
+77	today_kzn	1167570947	1
+78	kznuniversity	1325127936	1
+79	kazanfirst	1106665241	1
+80	ntr24ru	1029728383	1
+81	bugulma	1056259845	1
+82	visokaya_gora	1697703009	1
+83	tnvtv	1064230820	1
+84	zpravda	1149477093	1
+85	typicalkzn	1153050961	1
+86	apparatustatar	1115959312	1
+87	vgora_vesti	1484656280	1
+88	kazankstati	1867503426	1
+89	derbyshki_news	1324864641	1
+90	almetyevskcity	1686574888	1
+91	imenno116	1571467935	1
+92	ideluralnews	1265769356	1
+93	tatarstan_da	1476117321	1
+94	kukmor_tatarstan	1488795144	1
+95	mndnews	1442576262	1
+202	bugulma_ws	1429332041	1
+203	nurlatinform	1360008010	1
+204	novosti_mamadysha	1194634075	1
+205	sosedi_kazan	1362911948	1
+206	buinsknews	1499539354	1
+207	mykazan	1087405281	1
+208	innopolisnews_rus	1146741540	1
+209	agr_vesti	1152567130	1
+210	zainsknews	1100336167	1
+211	BavlyinformNEWS	1443380456	1
+212	chistopol_news	1300827945	1
+213	bugulgazeta	1388621704	1
+214	tetyushy	1307482906	1
+215	kazan_novost	1343986114	1
+216	rtRBC	1488300121	1
+217	news116ru	1727657508	1
+218	Tagras_info	1374779114	1
+219	Aktanysh_Tatarstan	1174586085	1
+220	kazanalization	1226121745	1
+221	nemuraviev	1131519263	1
+430	resptatar	1367577077	1
+431	prokrt	1311866024	1
+432	y555142	1210698584	1
+433	Azatliqtatar	1074322504	1
+434	bdd_agryz	1297453010	1
+435	Garifullin1	1155251186	1
+436	yabloko_tat	1383439390	1
+437	oldkazan	1291251889	1
+438	dovuziu	1419939563	1
+439	kazangau	1674020646	1
+440	millikitaphane	1310341924	1
+441	milliardtatar	1225797077	1
+442	KazanNostalgique	1308102255	1
+443	volleyzenit	1002783687	1
+444	sportsarae	1378632032	1
+445	koresh_rt	1747764926	1
+446	kazandetki	1695735862	1
+447	suvarstroitt	1173187460	1
+448	novostroyky	1634881635	1
+449	Kazan_bezopasno	1259330040	1
+450	metroelectrotranskzn	1431860180	1
+451	dps_bugulma	1187137758	1
+452	gibdd116zelenodolsk	1175629222	1
+453	zaiyns	1488121199	1
+454	mendeleevsk_pdd	1382095534	1
+455	Islam_Tat	1035864425	1
+456	tatmitropolia	1026155579	1
+457	Medrese_Fanis_Official	1051870977	1
+458	FreeTatarstan	1370346815	1
+459	fpdrt	1209572947	1
+460	tatarafisha	1463472692	1
+461	bugulma_online16	1414708762	1
+462	bugulma_love	1648111823	1
+463	kazanzdes	1644769360	1
+464	Tatarstan24TV	1302815576	1
+465	gazeta_RT	1905974950	1
+466	chelnynews	1009025165	1
+467	tatvybory	1163134246	1
+468	tadza	1138587770	1
+469	enter_media	1218257345	1
+470	bykazan	1467965969	1
+471	gibddtatarstan	1795324557	1
+472	ShaltayBabay	1072182349	1
+473	tatmediaofftop	1455827758	1
+474	kazved	1142677118	1
+475	ttrstn	1054093467	1
+476	ipteshler	1215162270	1
+477	tatarstanza	1445703407	1
+295	chakchakbag	1311535640	1
+296	smi_menzela	1120088605	1
+297	bikbovguru	1218732626	1
+298	tatcenter_ru	1181469047	1
+299	aynuriskhakov	1467900118	1
+300	eveningkzn	1977859378	1
+301	kzn_official_tat	1557335677	1
+302	news_lensk_and_rt_rf	1957997816	1
+303	now_kazan	1769222929	1
+304	zeldol	1325016854	1
+478	tatnewschelny	1245397258	1
+479	babaycalls	1166649379	1
+480	kazangato	1342829761	1
+481	tatnewstatar	1242107935	1
+482	bezbuldyrabyz	1130031083	1
+483	prtatar	1339553995	1
+484	kznpapa	1303934870	1
+485	kamil_hazrat	1015865131	1
+486	aziz_zamaliev	1934304808	1
+487	phygitaltatarstan	1643921691	1
+488	podslukzn	1665444883	1
+490	zama_tatarstan	1921605166	1
+491	myperviekzn	1989396824	1
+492	mypervie16	1163593478	1
+494	muhtovinvest	1369942897	1
+495	nagumanovtd	1665729480	1
+496	nail_magdeev	1639388759	1
+497	ramilmullin	1502916389	1
+498	almet_novosti	1589709705	1
+499	zama_today	1932919167	1
+500	chayantatar	1333387626	1
+501	suumbike	1214705155	1
+502	tuganaylar2002	1263311061	1
+503	chelny_news1	1600564157	1
+489	my_kazan	1972876730	1
+392	novosti_tatarstana1	1251813902	1
+393	chelny_loc	1433083310	1
+394	kazan_tat	1544405086	1
+395	MDK_Tatarstan	1455544136	1
+396	it_tatarstan	1066472469	1
+397	iteventsru	1276513255	1
+398	micrt	1115712230	1
+399	tatarit	1307940057	1
+400	tarifirt	1382829581	1
+401	kazannovostroiki	1687745674	1
+402	biznesRT	1125880886	1
+403	dom_pred_fpp_rt	1368268239	1
+404	business_club_prime_nabchelny	1442132408	1
+405	tagras_biznesservice	1569624306	1
+406	gokzn	1726000702	1
+407	arhitekturasi	1102663273	1
+408	innoevents	1267407152	1
+409	SouthWindKazan	1094853239	1
+410	vishna_kzn	1579153627	1
+411	events_kazan_best	1691887697	1
+412	rustamminnikhanov	1545782313	1
+413	kamil_galeev	1354028236	1
+414	gazetabo	1418986176	1
+415	cik_rt	1454172161	1
+416	ttrstnnws	1459188271	1
+417	tpolit	1235439485	1
+418	azatliqradiosi	1061695180	1
+419	protest_kzn	1318398796	1
+420	neaysin	1395415633	1
+421	damir_fattakhov	1430996913	1
+493	banana_crypto	1597616042	1
+\.
+
+
+--
+-- Data for Name: client; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.client (id, session_id, status) FROM stdin;
+1	79520367755	1
+4	17722807011	1
+6	17722807086	1
+7	17722807125	1
+8	17722807209	2
+3	17722807123	2
+2	17722807031	2
+5	17722806944	2
+11	12097751806	2
+12	12097751858	2
+10	12097765573	2
+13	12098752242	2
+9	12097751810	2
+14	12098898404	1
+15	12098898436	1
+16	12098898668	1
+17	12102692058	1
+18	12102738279	1
+\.
+
+
+--
+-- Data for Name: client_channel_association; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.client_channel_association (client_id, channel_id) FROM stdin;
+1	1
+9	1
+11	1
+9	8
+11	8
+9	9
+11	9
+9	10
+12	1
+11	10
+9	11
+12	8
+11	11
+9	12
+12	9
+13	1
+11	12
+10	1
+9	13
+13	8
+12	10
+10	8
+11	13
+9	14
+13	9
+12	11
+10	9
+11	14
+10	10
+10	11
+12	12
+10	12
+9	15
+13	10
+11	15
+12	13
+11	16
+10	13
+9	16
+13	11
+12	14
+13	12
+9	17
+10	14
+11	17
+12	15
+9	18
+13	13
+10	15
+11	18
+12	16
+9	19
+13	14
+10	16
+11	19
+9	20
+12	17
+13	15
+10	17
+11	20
+12	18
+9	21
+13	16
+10	18
+11	21
+12	19
+9	22
+13	17
+11	22
+10	19
+12	20
+9	23
+12	21
+13	18
+11	23
+10	20
+9	24
+10	21
+13	19
+12	22
+11	24
+9	25
+10	22
+12	23
+13	20
+11	25
+9	26
+10	23
+12	24
+10	24
+11	26
+13	21
+9	27
+12	25
+13	22
+11	27
+9	28
+10	25
+13	23
+12	26
+11	28
+9	29
+10	26
+13	24
+11	29
+12	27
+9	30
+10	27
+13	25
+11	30
+12	28
+10	28
+9	31
+11	31
+13	26
+12	29
+13	27
+9	32
+10	29
+11	32
+12	30
+9	33
+13	28
+10	30
+11	33
+12	31
+13	29
+9	34
+10	31
+13	30
+12	32
+11	34
+9	35
+10	32
+13	31
+12	33
+11	35
+9	36
+12	34
+10	33
+13	32
+11	36
+10	34
+12	35
+9	37
+10	35
+13	33
+11	37
+12	36
+9	74
+10	36
+11	74
+13	34
+9	75
+10	37
+12	37
+11	75
+13	35
+12	74
+9	76
+10	74
+11	76
+13	36
+12	75
+9	77
+11	77
+10	75
+13	37
+12	76
+9	78
+10	76
+11	78
+13	74
+12	77
+9	79
+10	77
+13	75
+11	79
+12	78
+9	80
+10	78
+11	80
+13	76
+11	81
+9	81
+10	79
+12	79
+13	77
+9	82
+12	80
+11	82
+10	80
+13	78
+12	81
+9	83
+11	83
+10	81
+12	82
+13	79
+9	84
+13	80
+12	83
+9	85
+11	84
+10	82
+13	81
+10	83
+12	84
+9	86
+11	85
+10	84
+9	87
+13	82
+11	86
+12	85
+13	83
+10	85
+12	86
+9	88
+11	87
+11	88
+10	86
+13	84
+12	87
+12	88
+11	89
+10	87
+16	511
+17	508
+14	514
+17	509
+18	513
+18	514
+17	510
+16	514
+15	512
+15	513
+15	514
+13	85
+10	88
+13	86
+12	89
+11	90
+10	89
+13	87
+11	91
+12	90
+13	88
+10	90
+11	92
+12	91
+13	89
+10	91
+10	92
+11	93
+12	92
+13	90
+10	93
+11	94
+12	93
+10	94
+11	95
+12	94
+10	95
+12	95
+15	1
+14	1
+16	1
+16	8
+15	8
+18	1
+17	1
+14	8
+15	9
+14	9
+16	9
+17	8
+18	8
+14	10
+15	10
+16	10
+18	9
+17	9
+18	10
+16	11
+14	11
+15	11
+17	10
+15	12
+14	12
+18	11
+16	12
+17	11
+14	13
+15	13
+16	13
+15	14
+17	12
+18	12
+16	14
+14	14
+14	15
+18	13
+17	13
+16	15
+15	15
+14	16
+15	16
+18	14
+16	16
+17	14
+16	17
+17	15
+15	17
+18	15
+14	17
+17	16
+15	18
+18	16
+16	18
+14	18
+16	19
+18	17
+17	17
+15	19
+14	19
+16	20
+18	18
+17	18
+15	20
+14	20
+16	21
+18	19
+17	19
+15	21
+14	21
+18	20
+16	22
+17	20
+15	22
+18	21
+16	23
+14	22
+15	23
+16	24
+17	21
+18	22
+14	23
+15	24
+16	25
+17	22
+18	23
+15	25
+14	24
+18	24
+17	23
+16	26
+14	25
+15	26
+16	27
+18	25
+14	26
+17	24
+15	27
+18	26
+16	28
+14	27
+17	25
+15	28
+16	29
+18	27
+17	26
+14	28
+15	29
+17	27
+16	30
+18	28
+14	29
+15	30
+14	30
+16	31
+17	28
+15	31
+18	29
+14	31
+16	32
+18	30
+17	29
+15	32
+16	33
+14	32
+17	30
+15	33
+18	31
+16	34
+15	34
+14	33
+18	32
+17	31
+16	35
+14	34
+15	35
+17	32
+18	33
+16	36
+14	35
+18	34
+15	36
+17	33
+16	37
+18	35
+14	36
+16	74
+15	37
+17	34
+16	75
+14	37
+18	36
+15	74
+16	76
+17	35
+14	74
+18	37
+15	75
+14	75
+17	36
+16	77
+18	74
+14	76
+15	76
+17	37
+18	75
+16	78
+14	77
+17	74
+14	78
+15	77
+16	79
+18	76
+17	75
+16	80
+15	78
+18	77
+14	79
+16	81
+17	76
+15	79
+14	80
+18	78
+14	81
+16	82
+17	77
+15	80
+18	79
+14	82
+17	78
+16	83
+18	80
+15	81
+17	79
+14	83
+18	81
+15	82
+16	84
+17	80
+18	82
+16	85
+14	85
+15	84
+14	86
+18	84
+15	85
+17	83
+18	86
+15	86
+14	88
+16	89
+18	87
+14	89
+16	90
+18	88
+16	91
+17	87
+14	91
+18	90
+16	93
+15	91
+17	89
+15	92
+18	92
+15	508
+18	512
+15	509
+16	512
+15	510
+16	513
+15	511
+17	511
+17	512
+17	513
+17	514
+14	84
+15	83
+17	81
+18	83
+16	86
+17	82
+16	87
+18	85
+14	87
+16	88
+17	84
+15	87
+17	85
+15	88
+17	86
+15	89
+14	90
+18	89
+15	90
+16	92
+17	88
+14	92
+18	91
+16	94
+14	93
+17	90
+15	93
+16	95
+14	94
+17	91
+18	93
+15	94
+16	202
+14	95
+17	92
+18	94
+15	95
+16	203
+14	202
+17	93
+15	202
+16	204
+18	95
+16	205
+15	203
+18	202
+14	203
+17	94
+14	204
+18	203
+15	204
+17	95
+16	206
+14	205
+18	204
+15	205
+17	202
+16	207
+14	206
+17	203
+15	206
+16	208
+18	205
+15	207
+14	207
+17	204
+14	208
+16	209
+18	206
+17	205
+15	208
+18	207
+14	209
+16	210
+17	206
+15	209
+18	208
+16	211
+14	210
+15	210
+17	207
+18	209
+16	212
+14	211
+17	208
+18	210
+15	211
+14	212
+16	213
+17	209
+15	212
+18	211
+14	213
+15	213
+16	214
+17	210
+14	214
+18	212
+15	214
+17	211
+14	215
+16	215
+18	213
+15	215
+17	212
+16	216
+18	214
+14	216
+15	216
+17	213
+16	217
+14	217
+18	215
+17	214
+15	217
+14	218
+16	218
+18	216
+17	215
+15	218
+14	219
+18	217
+16	219
+15	219
+17	216
+14	220
+18	218
+16	220
+14	221
+17	217
+15	220
+16	221
+18	219
+17	218
+15	221
+14	295
+18	220
+16	295
+15	295
+17	219
+14	296
+18	221
+16	296
+14	297
+17	220
+15	296
+18	295
+17	221
+16	297
+14	298
+17	295
+18	296
+15	297
+14	299
+16	298
+15	298
+18	297
+17	296
+14	300
+16	299
+15	299
+17	297
+18	298
+14	301
+17	298
+18	299
+16	300
+15	300
+14	302
+17	299
+16	301
+18	300
+15	301
+14	303
+17	300
+16	302
+18	301
+15	302
+14	304
+16	303
+18	302
+17	301
+15	303
+14	392
+18	303
+16	304
+17	302
+15	304
+14	393
+18	304
+16	392
+17	303
+14	394
+15	392
+18	392
+14	395
+16	393
+17	304
+15	393
+14	396
+18	393
+16	394
+15	394
+17	392
+18	394
+14	397
+15	395
+16	395
+17	393
+18	395
+14	398
+15	396
+16	396
+18	396
+17	394
+15	397
+14	399
+16	397
+17	395
+18	397
+15	398
+17	396
+14	400
+16	398
+15	399
+17	397
+18	398
+17	398
+14	401
+17	399
+14	402
+18	400
+16	399
+15	400
+18	399
+16	400
+15	401
+17	400
+16	401
+15	402
+14	403
+18	401
+17	401
+16	402
+15	403
+18	402
+14	404
+17	402
+16	403
+18	403
+15	404
+17	403
+14	405
+16	404
+15	405
+18	404
+14	406
+16	405
+17	404
+14	407
+15	406
+18	405
+17	405
+16	406
+14	408
+16	407
+15	407
+18	406
+17	406
+14	409
+18	407
+15	408
+16	408
+14	410
+18	408
+17	407
+16	409
+15	409
+14	411
+18	409
+17	408
+16	410
+15	410
+14	412
+17	409
+18	410
+15	411
+16	411
+14	413
+17	410
+18	411
+16	412
+15	412
+14	414
+17	411
+15	413
+18	412
+16	413
+14	415
+18	413
+16	414
+17	412
+15	414
+14	416
+18	414
+16	415
+17	413
+14	417
+15	415
+18	415
+16	416
+17	414
+18	416
+14	418
+15	416
+17	415
+16	417
+18	417
+14	419
+15	417
+17	416
+16	418
+18	418
+14	420
+17	417
+15	418
+16	419
+18	419
+15	419
+14	421
+17	418
+18	420
+16	420
+17	419
+14	430
+15	420
+18	421
+16	421
+15	421
+17	420
+14	431
+18	430
+16	430
+15	430
+18	431
+17	421
+14	432
+16	431
+14	433
+15	431
+18	432
+17	430
+16	432
+17	431
+14	434
+18	433
+15	432
+16	433
+17	432
+14	435
+18	434
+15	433
+16	434
+14	436
+18	435
+17	433
+15	434
+16	435
+14	437
+17	434
+18	436
+14	438
+15	435
+16	436
+17	435
+18	437
+15	436
+14	439
+17	436
+16	437
+15	437
+18	438
+17	437
+16	438
+14	440
+18	439
+17	438
+15	438
+14	441
+16	439
+17	439
+18	440
+15	439
+14	442
+16	440
+18	441
+17	440
+16	441
+15	440
+18	442
+14	443
+17	441
+18	443
+16	442
+15	441
+17	442
+14	444
+18	444
+16	443
+15	442
+14	445
+18	445
+15	443
+17	443
+16	444
+14	446
+17	444
+15	444
+18	446
+16	445
+14	447
+17	445
+15	445
+18	447
+16	446
+14	448
+17	446
+15	446
+18	448
+16	447
+14	449
+17	447
+14	450
+15	447
+18	449
+16	448
+17	448
+15	448
+16	449
+14	451
+17	449
+18	450
+14	452
+16	450
+15	449
+17	450
+18	451
+15	450
+16	451
+17	451
+14	453
+18	452
+15	451
+16	452
+17	452
+14	454
+18	453
+15	452
+17	453
+16	453
+15	453
+16	454
+18	455
+18	456
+16	455
+15	455
+14	458
+16	456
+18	458
+14	459
+15	457
+14	460
+17	458
+18	460
+14	461
+15	459
+18	454
+14	455
+14	456
+17	454
+15	454
+14	457
+17	455
+18	457
+17	456
+15	456
+16	457
+17	457
+18	459
+16	458
+15	458
+16	459
+17	459
+16	460
+18	461
+14	462
+15	460
+17	460
+16	461
+14	463
+18	462
+15	461
+17	461
+16	462
+15	462
+14	464
+18	463
+17	462
+15	463
+16	463
+14	465
+18	464
+17	463
+18	465
+15	464
+16	464
+14	466
+15	465
+17	464
+18	466
+16	465
+14	467
+15	466
+16	466
+18	467
+17	465
+14	468
+15	467
+16	467
+18	468
+17	466
+14	469
+18	469
+15	468
+16	468
+17	467
+14	470
+15	469
+18	470
+16	469
+17	468
+18	471
+14	471
+16	470
+15	470
+18	472
+14	472
+17	469
+16	471
+15	471
+17	470
+18	473
+14	473
+16	472
+15	472
+18	474
+14	474
+16	473
+17	471
+15	473
+14	475
+18	475
+16	474
+17	472
+15	474
+18	476
+14	476
+16	475
+17	473
+14	477
+15	475
+18	477
+17	474
+16	476
+14	478
+18	478
+15	476
+16	477
+17	475
+14	479
+18	479
+15	477
+16	478
+14	480
+15	478
+18	480
+16	479
+17	476
+14	481
+16	480
+15	479
+18	481
+17	477
+14	482
+16	481
+15	480
+18	482
+14	483
+17	478
+18	483
+16	482
+15	481
+17	479
+18	484
+16	483
+14	484
+15	482
+16	484
+17	480
+18	485
+14	485
+15	483
+17	481
+16	485
+14	486
+18	486
+17	482
+15	484
+14	487
+16	486
+18	487
+15	485
+17	483
+14	488
+18	488
+16	487
+17	484
+15	486
+14	489
+16	488
+18	489
+15	487
+17	485
+16	489
+18	490
+14	490
+17	486
+15	488
+16	490
+14	491
+18	491
+15	489
+17	487
+14	492
+16	491
+18	492
+15	490
+17	488
+14	493
+16	492
+18	493
+15	491
+16	493
+14	494
+17	489
+18	494
+16	494
+15	492
+14	495
+17	490
+18	495
+14	496
+17	491
+15	493
+16	495
+18	496
+17	492
+14	497
+16	496
+15	494
+18	497
+14	498
+17	493
+16	497
+15	495
+16	498
+18	498
+17	494
+14	499
+15	496
+18	499
+17	495
+14	500
+16	499
+18	500
+14	501
+15	497
+17	496
+16	500
+18	501
+14	502
+17	497
+16	501
+15	498
+18	502
+14	503
+16	502
+17	498
+15	499
+18	503
+14	504
+16	503
+17	499
+14	505
+16	504
+18	505
+16	505
+17	501
+15	502
+17	502
+15	503
+18	507
+16	507
+14	509
+16	508
+14	510
+18	509
+17	505
+15	506
+14	512
+16	510
+18	511
+14	513
+18	504
+15	500
+17	500
+14	506
+15	501
+18	506
+14	507
+16	506
+14	508
+17	503
+15	504
+18	508
+17	504
+15	505
+14	511
+16	509
+18	510
+17	506
+15	507
+17	507
+\.
+
+
+--
+-- Name: channel_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.channel_id_seq', 542, true);
+
+
+--
+-- Name: client_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.client_id_seq', 18, true);
+
+
+--
+-- Name: alembic_version alembic_version_pkc; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.alembic_version
+    ADD CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num);
+
+
+--
+-- Name: channel channel_chat_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.channel
+    ADD CONSTRAINT channel_chat_id_key UNIQUE (chat_id);
+
+
+--
+-- Name: channel channel_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.channel
+    ADD CONSTRAINT channel_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: channel channel_username_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.channel
+    ADD CONSTRAINT channel_username_key UNIQUE (username);
+
+
+--
+-- Name: client client_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.client
+    ADD CONSTRAINT client_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: client client_session_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.client
+    ADD CONSTRAINT client_session_id_key UNIQUE (session_id);
+
+
+--
+-- Name: client_channel_association uq_client_channel; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.client_channel_association
+    ADD CONSTRAINT uq_client_channel UNIQUE (client_id, channel_id);
+
+
+--
+-- Name: client_channel_association client_channel_association_channel_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.client_channel_association
+    ADD CONSTRAINT client_channel_association_channel_id_fkey FOREIGN KEY (channel_id) REFERENCES public.channel(id) ON DELETE CASCADE;
+
+
+--
+-- Name: client_channel_association client_channel_association_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.client_channel_association
+    ADD CONSTRAINT client_channel_association_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.client(id) ON DELETE CASCADE;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
