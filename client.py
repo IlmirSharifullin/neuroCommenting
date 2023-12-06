@@ -8,7 +8,7 @@ from functools import partial
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from telethon import TelegramClient, events
+from telethon import TelegramClient, events, functions, types
 from telethon.errors import UserDeactivatedBanError
 from telethon.tl.functions.channels import JoinChannelRequest
 from telethon.tl.functions.channels import ReadMessageContentsRequest
@@ -27,15 +27,23 @@ async def message_handler(event: events.NewMessage.Event, client: TelegramClient
         '👍',
         'Всем привет.'
     ]
-    if chat.username in channel_logins:
+    if chat.username in ['qwe125412']:
         try:
             print(chat.username)
-            await asyncio.sleep(random.randint(30, 5*60))
+            result = await client(functions.messages.SendReactionRequest(
+                peer=chat,
+                msg_id=event.message.id,
+                add_to_recent=True,
+                reaction=[types.ReactionEmoji(
+                    emoticon=u"\u2764"
+                )]
+            ))
+            print(result)
+            await asyncio.sleep(random.randint(30, 60))
             await client.send_message(chat, random.choice(choices), comment_to=event.message.id)
             await asyncio.sleep(180)
         except Exception as ex:
-            print(ex)
-            pass
+            print(traceback.format_exc())
 
 
 class Client:
@@ -54,12 +62,12 @@ class Client:
         await asyncio.sleep(5)
         # self.client.add_event_handler(partial(message_handler, client=self.client), events.NewMessage())
 
-        logger.info(f'{self.me.session_id} - started subscribing')
-        start_time = datetime.datetime.now()
-        await self.subscribe_channels()
-        logger.info(f'{self.me.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
-
-        needs = False
+        # logger.info(f'{self.me.session_id} - started subscribing')
+        # start_time = datetime.datetime.now()
+        # await self.subscribe_channels()
+        # logger.info(f'{self.me.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
+        print('старт')
+        needs = True
         if needs:
             self.client.add_event_handler(partial(message_handler, client=self.client), events.NewMessage())
             await self.client.run_until_disconnected()
