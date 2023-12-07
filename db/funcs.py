@@ -1,9 +1,8 @@
 import asyncio
+import traceback
 
-from psycopg.errors import UniqueViolation
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import async_session_maker
@@ -16,8 +15,13 @@ from typing import Callable, List, Optional
 def with_session(func: Callable) -> Callable:
     @wraps(func)
     async def wrapper(*args, **kwargs):
-        async with async_session_maker() as session:
-            return await func(*args, session, **kwargs)
+        try:
+            async with async_session_maker() as session:
+                result = await func(*args, session, **kwargs)
+                await session.commit()
+            return result
+        except Exception as ex:
+            print(traceback.format_exc())
 
     return wrapper
 
@@ -54,7 +58,7 @@ async def insert_channel(chat_id: int, username: str, session: AsyncSession) -> 
 @with_session
 async def insert_client(session_id: str, session: AsyncSession, status=ClientStatusEnum.OK.value) -> Optional[TgClient]:
     try:
-        client = await session.execute(insert(TgClient).values(session_id=session_id, status=status))
+        client = await session.execute(insert(TgClient).values(session_id=session_id, status=status).returning(TgClient))
         client = client.scalar()
         await session.commit()
         return client
@@ -71,7 +75,8 @@ async def set_banned_status(session_id: str, session: AsyncSession):
         await insert_client(session_id, status=ClientStatusEnum.BANNED.value)
     else:
         cli.status = ClientStatusEnum.BANNED.value
-        await session.execute(update(TgClient).values(status=ClientStatusEnum.BANNED.value).filter_by(session_id=session_id))
+        await session.execute(
+            update(TgClient).values(status=ClientStatusEnum.BANNED.value).filter_by(session_id=session_id))
         await session.commit()
 
 
@@ -91,3 +96,18 @@ async def get_joined_channels(client: TgClient, session: AsyncSession):
 async def add_join(client: TgClient, channel: TgChannel, session: AsyncSession):
     await session.execute(insert(association_table).values(client_id=client.id, channel_id=channel.id))
     await session.commit()
+
+
+@with_session
+async def update_data(session_id: str, session: AsyncSession, first_name: str = None, last_name: str = None,
+                      sex: int = None, photo_path: str = None, about: str = None):
+    print('update db')
+    client: TgClient = await get_client(session_id)
+    await session.execute(
+        update(TgClient).filter_by(session_id=session_id).values(first_name=first_name or client.first_name,
+                                                                 last_name=last_name or client.last_name,
+                                                                 sex=sex or client.sex,
+                                                                 photo_path=photo_path or client.photo_path,
+                                                                 about=about or client.about))
+
+    return await session.commit()

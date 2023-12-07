@@ -15,8 +15,17 @@ async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 logging.basicConfig(level=logging.INFO, datefmt='%(asctime)s', filename='logs.log')
 logger = logging.getLogger()
 
-
 channel_logins = [
+    'lh_eex97xothNThi',
+    'qwe125412',
+    'js9Var2qbq5kODI6',
+    'HL12JzSXTAozMjJi',
+    'light_almetyevsk',
+    'aznakaevo',
+    'bugulma',
+    'ligth_mendeleevsk',
+]
+old_channel_logins = [
     'qwe125412'
     , 'khayrullinayrat'
     , 'tsarofkazan'

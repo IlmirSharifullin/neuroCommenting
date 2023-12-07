@@ -1,6 +1,6 @@
 from enum import Enum
 
-from sqlalchemy import String, Integer, Column, Table, ForeignKey, UniqueConstraint
+from sqlalchemy import String, Integer, Column, Table, ForeignKey, UniqueConstraint, SmallInteger
 from sqlalchemy.orm import DeclarativeBase, mapped_column, relationship
 
 
@@ -12,6 +12,11 @@ class ClientStatusEnum(Enum):
 class ChannelStatusEnum(Enum):
     OK = 1
     PRIVATE = 2
+
+
+class SexEnum(Enum):
+    MALE = 0
+    FEMALE = 1
 
 
 class Base(DeclarativeBase):
@@ -48,6 +53,11 @@ class TgClient(Base):
     id = Column(Integer, primary_key=True)
     session_id = Column(String(255), unique=True)
     status = Column(Integer(), default=1, nullable=False)
+    first_name = Column(String(255))
+    last_name = Column(String(255))
+    about = Column(String())
+    sex = Column(SmallInteger(), default=0)
+    photo_path = Column(String(255))
     joined_channels = relationship('TgChannel', secondary=association_table, back_populates='joined_clients')
 
     def __str__(self):
