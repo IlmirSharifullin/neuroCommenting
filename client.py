@@ -21,6 +21,7 @@ class Client:
     async def run(self):
         try:
             print('run')
+            log_to_channel(f"running {self.session_id}")
             async with self.client:
                 print('get me')
                 log_to_channel(f'connected to {self.session_id}')
