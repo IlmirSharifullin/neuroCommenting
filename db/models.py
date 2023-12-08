@@ -15,8 +15,8 @@ class ChannelStatusEnum(Enum):
 
 
 class SexEnum(Enum):
-    MALE = 0
-    FEMALE = 1
+    MAN = 0
+    WOMAN = 1
 
 
 class Base(DeclarativeBase):

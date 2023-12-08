@@ -1,16 +1,23 @@
 import logging
 import os
 
+import requests
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 load_dotenv()
 
 DB_URL = os.getenv('DB_URL')
+LOGS_CHANNEL_ID = os.getenv('LOGS_CHANNEL_ID')
+
+
+def log_to_channel(msg):
+    requests.post('https://api.telegram.org/bot6621958158:AAFIALtB_WkdK1YbXZ_dBfkLxzVR6xAjPK0/sendMessage',
+                  params={'text': msg, 'chat_id': LOGS_CHANNEL_ID})
+
 
 engine = create_async_engine(url=DB_URL, echo=False)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
-
 
 logging.basicConfig(level=logging.INFO, datefmt='%(asctime)s', filename='logs.log')
 logger = logging.getLogger()

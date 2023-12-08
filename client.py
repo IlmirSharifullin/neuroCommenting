@@ -7,7 +7,7 @@ import traceback
 from telethon import TelegramClient, events, functions, types
 from telethon.errors import UserDeactivatedBanError
 
-from config import channel_logins, logger
+from config import channel_logins, logger, log_to_channel
 import db.funcs as db
 import chatgpt.funcs as gpt
 from db.models import TgClient
@@ -22,8 +22,8 @@ class Client:
         try:
             print('run')
             async with self.client:
-
                 print('get me')
+                log_to_channel(f'connected to {self.session_id}')
                 me = await db.get_client(self.session_id)
                 if me is None:
                     me = await db.insert_client(self.session_id)
@@ -43,6 +43,7 @@ class Client:
                     self.client.add_event_handler(self.message_handler, events.NewMessage())
                 await self.client.run_until_disconnected()
         except Exception as ex:
+            log_to_channel(traceback.format_exc())
             print(traceback.format_exc())
             await self.client.disconnect()
 
@@ -78,11 +79,12 @@ class Client:
 
         except UserDeactivatedBanError as ex:
             await db.set_banned_status(self.session_id)
+            log_to_channel(f'{self.session_id} client banned')
             print(self.session_id)
         except Exception as ex:
+            log_to_channel(traceback.format_exc())
             logger.error(traceback.format_exc())
             print(ex)
-            logger.error(traceback.format_exc())
 
     async def get_joined_channels(self):
         me = await db.get_client(self.session_id)
@@ -156,5 +158,6 @@ class Client:
                 text = gpt.get_comment(event.message.message, sex=me.sex)
                 await client.send_message(chat, text, comment_to=event.message.id)
             except Exception as ex:
+                log_to_channel(traceback.format_exc())
                 logger.error(traceback.format_exc())
                 print(traceback.format_exc())
