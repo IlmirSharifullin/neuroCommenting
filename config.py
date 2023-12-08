@@ -16,10 +16,7 @@ logging.basicConfig(level=logging.INFO, datefmt='%(asctime)s', filename='logs.lo
 logger = logging.getLogger()
 
 channel_logins = [
-    'lh_eex97xothNThi',
     'qwe125412',
-    'js9Var2qbq5kODI6',
-    'HL12JzSXTAozMjJi',
     'light_almetyevsk',
     'aznakaevo',
     'bugulma',

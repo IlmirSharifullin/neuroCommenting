@@ -1,19 +1,11 @@
 import asyncio
 import datetime
-import logging
 import os
 import random
-import time
 import traceback
-from functools import partial
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from telethon import TelegramClient, events, functions, types
-from telethon.errors import UserDeactivatedBanError, UserAlreadyParticipantError
-from telethon.tl.functions.channels import JoinChannelRequest
-from telethon.tl.functions.channels import ReadMessageContentsRequest
-from telethon.tl.types import Channel, User
+from telethon.errors import UserDeactivatedBanError
 
 from config import channel_logins, logger
 import db.funcs as db
@@ -28,28 +20,28 @@ class Client:
 
     async def run(self):
         try:
+            print('run')
+            async with self.client:
+                print('get me')
+                me = await db.get_client(self.session_id)
+                if me is None:
+                    me = await db.insert_client(self.session_id)
+                    print(me)
+                await asyncio.sleep(5)
 
-            me = await db.get_client(self.session_id)
-            if me is None:
-                me = await db.insert_client(self.session_id)
-                print(me)
-            await asyncio.sleep(5)
+                # await self.set_random_data()
 
-            # await self.set_random_data()
-            print(me.session_id)
-            logger.info(f'{me.session_id} - started subscribing')
-            start_time = datetime.datetime.now()
-            await self.subscribe_channels()
-            logger.info(f'{me.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
-            print('старт')
+                print(me.session_id)
+                logger.info(f'{me.session_id} - started subscribing')
+                start_time = datetime.datetime.now()
+                await self.subscribe_channels()
+                logger.info(f'{me.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
+                print('старт')
 
-            needs = True
-            if needs:
-                self.client.add_event_handler(self.message_handler, events.NewMessage())
-                await self.client.run_until_disconnected()
-            else:
-                await self.client.disconnect()
-
+                needs = True
+                if needs:
+                    self.client.add_event_handler(self.message_handler, events.NewMessage())
+                    await self.client.run_until_disconnected()
         except Exception as ex:
             print(traceback.format_exc())
             await self.client.disconnect()
@@ -61,44 +53,36 @@ class Client:
             channels = await db.get_channels()
             channels_usernames = [channel.username for channel in channels]
             for username in channel_logins:
-                try:
-                    entity = None
-                    if username not in channels_usernames:
-                        try:
-                            entity = await self.client.get_entity(username)
-                        except ValueError:
-                            try:
-                                updates = await self.client(functions.messages.ImportChatInviteRequest(username))
-                                entity = updates.chats[0]
-                            except Exception:
-                                entity = await self.client.get_entity(username)
-                        except Exception as ex:
-                            entity = await self.client.get_entity(username)
-                        channel = await db.insert_channel(entity.username, entity.id)
-                    else:
-                        channel = await db.get_channel(username)
+                entity = None
+                if username not in channels_usernames:
+                    print(username)
+                    entity = await self.client.get_entity(username)
+                    channel = await db.insert_channel(entity.id, entity.username)
+                    channels_usernames.append(channel.username)
+                    print(channel)
+                else:
+                    channel = await db.get_channel(username)
 
-                    joined_clients = await db.get_joined_clients(channel)
-                    if not joined_clients:
-                        joined_clients = []
-                    if me.id not in joined_clients:
-                        if channel:
-                            if entity is None:
-                                entity = await self.client.get_entity(username)
-                            await self.client(JoinChannelRequest(entity))
-                            await db.add_join(me, channel)
-                            sleep_time = random.randint(10 * 60, 20 * 60)
-                            print(f'{me} joins {username}. Sleep for {sleep_time}...')
-                            await asyncio.sleep(sleep_time)
-                except Exception as ex:
-                    logger.error(traceback.format_exc())
-                    continue
+                joined_clients = await db.get_joined_clients(channel)
+                if not joined_clients:
+                    joined_clients = []
+                if me.id not in joined_clients:
+                    if channel:
+                        if entity is None:
+                            entity = await self.client.get_entity(username)
+                        await self.client(functions.channels.JoinChannelRequest(entity))
+                        await db.add_join(me, channel)
+                        sleep_time = random.randint(10 * 60, 20 * 60)
+                        print(f'{me} joins {username}. Sleep for {sleep_time}...')
+                        await asyncio.sleep(sleep_time)
+
         except UserDeactivatedBanError as ex:
             await db.set_banned_status(self.session_id)
             print(self.session_id)
         except Exception as ex:
             logger.error(traceback.format_exc())
-            print(traceback.format_exc())
+            print(ex)
+            logger.error(traceback.format_exc())
 
     async def get_joined_channels(self):
         me = await db.get_client(self.session_id)
@@ -107,11 +91,20 @@ class Client:
     async def update_db_data(self, fname: str = None, lname: str = None, sex: str = None, photo_path: str = None,
                              about: str = None):
         await db.update_data(self.session_id, first_name=fname, last_name=lname, sex=sex, photo_path=photo_path,
-                                   about=about)
+                             about=about)
 
     async def _update_photo(self, path: str):
         photo = await self.client.upload_file(path)
-        print(photo)
+        photos = await self.client.get_profile_photos('me')
+        for i in range(len(photos)):
+            photos[i] = types.InputPhoto(
+                id=photos[i].id,
+                access_hash=photos[i].access_hash,
+                file_reference=photos[i].file_reference
+            )
+        await self.client(functions.photos.DeletePhotosRequest(
+            id=photos))
+
         return await self.client(functions.photos.UploadProfilePhotoRequest(file=photo))
 
     async def update_profile(self, fname: str = None, lname: str = None, photo_path: str = None, about: str = None):
@@ -157,7 +150,7 @@ class Client:
 
                 await client(
                     functions.messages.GetMessagesViewsRequest(peer=chat, id=[event.message.id], increment=True))
-                sleep_time = random.randint(30, 5*60)
+                sleep_time = random.randint(30, 5 * 60)
                 print(sleep_time)
                 await asyncio.sleep(sleep_time)
                 text = gpt.get_comment(event.message.message, sex=me.sex)

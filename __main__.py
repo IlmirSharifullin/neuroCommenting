@@ -51,16 +51,15 @@ async def connect_sessions(*sessions):
 
         tasks.append(
             asyncio.create_task(
-                delay(cli.run(), random.randint(2, 5))
+                delay(cli.run(), random.randint(5, 10))
             )
         )
     return tasks
 
 
 async def main():
-    strange_sessions = ['17722807086', '17722807011', '17722807125']
-    sessions = ['12097751806', '12097751810', '12097751858', '12097765573', '12098752242']
     sessions = [('12098898404', 0), ('12098898436', 1), ('12098898668', 2), ('12102692058', 3), ('12102738279', 4)]
+    sessions = sessions[:-2]
     tasks = await connect_sessions(*sessions)
     await asyncio.wait(tasks)
 

@@ -48,10 +48,11 @@ async def get_client(session_id: str, session: AsyncSession) -> TgClient:
 @with_session
 async def insert_channel(chat_id: int, username: str, session: AsyncSession) -> Optional[TgChannel]:
     try:
-        channel = await session.execute(insert(TgChannel).values(chat_id=chat_id, username=username))
+        channel = await session.execute(insert(TgChannel).values(chat_id=chat_id, username=username).returning(TgChannel))
         await session.commit()
         return channel.scalar()
     except Exception as ex:
+        print(ex)
         return None
 
 
