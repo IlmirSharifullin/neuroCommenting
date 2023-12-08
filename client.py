@@ -22,6 +22,9 @@ class Client:
         try:
             print('run')
             async with self.client:
+                needs = True
+                if needs:
+                    self.client.add_event_handler(self.message_handler, events.NewMessage())
                 print('get me')
                 me = await db.get_client(self.session_id)
                 if me is None:
@@ -37,11 +40,7 @@ class Client:
                 await self.subscribe_channels()
                 logger.info(f'{me.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
                 print('старт')
-
-                needs = True
-                if needs:
-                    self.client.add_event_handler(self.message_handler, events.NewMessage())
-                    await self.client.run_until_disconnected()
+                await self.client.run_until_disconnected()
         except Exception as ex:
             print(traceback.format_exc())
             await self.client.disconnect()
@@ -134,7 +133,7 @@ class Client:
         session = self
         client: TelegramClient = session.client
 
-        if chat.username in ['qwe125412']:
+        if chat.username in channel_logins:
             try:
                 print(chat.username)
                 # result = await client(functions.messages.SendReactionRequest(
