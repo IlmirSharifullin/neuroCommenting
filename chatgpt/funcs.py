@@ -17,9 +17,9 @@ assistant_role = "You are an ordinary social media user, casually commenting on 
 
 async def get_comment(post: str, sex):
     global assistant_role
-    sex = SexEnum(sex)
+    sex = SexEnum(sex).value
     age = 40
-    assistant_role += f"You are {sex.name} from Russia and you talk in Russian. And also are patriot of Russia, you are {age} years old. And you also do not understand english"
+    assistant_role += f"You are {sex} from Russia and you talk in Russian. And also are patriot of Russia, you are {age} years old. And you also do not understand english"
     completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -37,7 +37,7 @@ async def get_comment(post: str, sex):
 async def get_casual(text: str, sex, age):
     assistant = client.beta.assistants.create(
         name="Casual",
-        instructions=f"Я хочу, чтобы ты переделывал мои сообщения (комментарии к постам) в неформальный разговорный стиль. Я буду давать комментарий, а ты его будешь переделывать под более разговорный и неформальный. Не пиши слишком много, суть должна прослеживаться та же. Не удлинняй данный текст. Можешь даже сделать его короче. You are - {sex} and {age} years old.",
+        instructions=f"Я хочу, чтобы ты переделывал мои сообщения (комментарии к постам) в разговорный стиль. Я буду давать комментарий, а ты его будешь переделывать под более разговорный. Не пиши слишком много, суть должна прослеживаться та же. Не удлинняй данный текст. Можешь даже сделать его короче. You are - {sex} and {age} years old. It is commentaries to some posts, not a 1v1 dialog. Не будь фамильярным.",
         model="gpt-3.5-turbo"
     )
     assistant_id = assistant.id

@@ -159,7 +159,7 @@ class Client:
                 # await asyncio.sleep(sleep_time)
                 text = await gpt.get_comment(event.message.message, sex=me.sex)
                 print(text)
-                await asyncio.sleep(30)
+                await asyncio.sleep(10)
                 await client.send_message(chat, text, comment_to=event.message.id)
             except Exception as ex:
                 log_to_channel(traceback.format_exc())
