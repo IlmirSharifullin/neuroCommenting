@@ -3,7 +3,6 @@ import json
 import random
 import traceback
 
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from telethon import TelegramClient
 from telethon.errors import UserDeactivatedBanError
 
@@ -60,7 +59,7 @@ async def connect_sessions(*sessions):
 
 async def main():
     sessions = [('12098898404', 0), ('12098898436', 1), ('12098898668', 2), ('12102692058', 3), ('12102738279', 4)]
-    sessions = sessions[:-2]
+    sessions = sessions[1:-3]
     tasks = await connect_sessions(*sessions)
     await asyncio.wait(tasks)
 

@@ -136,9 +136,10 @@ class Client:
         chat = event.chat
         session = self
         client: TelegramClient = session.client
-
-        if chat.username in channel_logins:
+        if chat.username in channel_logins[0:1]:
             try:
+                log_to_channel(f'new message in {chat.username}')
+                logger.info(f'new message in {chat.username}')
                 print(chat.username)
                 # result = await client(functions.messages.SendReactionRequest(
                 #     peer=chat,
@@ -155,8 +156,10 @@ class Client:
                     functions.messages.GetMessagesViewsRequest(peer=chat, id=[event.message.id], increment=True))
                 sleep_time = random.randint(30, 5 * 60)
                 print(sleep_time)
-                await asyncio.sleep(sleep_time)
-                text = gpt.get_comment(event.message.message, sex=me.sex)
+                # await asyncio.sleep(sleep_time)
+                text = await gpt.get_comment(event.message.message, sex=me.sex)
+                print(text)
+                await asyncio.sleep(30)
                 await client.send_message(chat, text, comment_to=event.message.id)
             except Exception as ex:
                 log_to_channel(traceback.format_exc())
