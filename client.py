@@ -22,30 +22,32 @@ class Client:
         try:
             print('run')
             log_to_channel(f"running {self.session_id}")
-            async with self.client:
-                print('get me')
-                log_to_channel(f'connected to {self.session_id}')
-                me = await db.get_client(self.session_id)
-                if me is None:
-                    me = await db.insert_client(self.session_id)
-                    print(me)
-                await asyncio.sleep(5)
+            await self.client.connect()
+            print('get me')
+            log_to_channel(f'connected to {self.session_id}')
+            me = await db.get_client(self.session_id)
+            if me is None:
+                me = await db.insert_client(self.session_id)
+                print(me)
+            await asyncio.sleep(5)
 
-                # await self.set_random_data()
+            # await self.set_random_data()
 
-                print(me.session_id)
-                logger.info(f'{me.session_id} - started subscribing')
-                start_time = datetime.datetime.now()
-                await self.subscribe_channels()
-                logger.info(f'{me.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
-                print('старт')
-                needs = True
-                if needs:
-                    self.client.add_event_handler(self.message_handler, events.NewMessage())
-                await self.client.run_until_disconnected()
+            print(me.session_id)
+            logger.info(f'{me.session_id} - started subscribing')
+            start_time = datetime.datetime.now()
+            await self.subscribe_channels()
+            logger.info(f'{me.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
+            print('старт')
+            needs = True
+            if needs:
+                self.client.add_event_handler(self.message_handler, events.NewMessage())
+            await self.client.run_until_disconnected()
         except Exception as ex:
             log_to_channel(traceback.format_exc())
             print(traceback.format_exc())
+            await self.client.disconnect()
+        except KeyboardInterrupt:
             await self.client.disconnect()
 
     async def subscribe_channels(self):
@@ -126,11 +128,12 @@ class Client:
             names = f.read().split('\n')
             lname = random.choice(names)
 
-        filenames = os.listdir(f'data/images/{sex}')
-        filename = f'{sex}/' + random.choice(filenames)
-        await self.update_profile(fname, lname, filename)
-        await self.update_db_data(fname, lname, sex, filename)
-        return {'first_name': fname, 'last_name': lname, 'filename': filename, 'sex': sex}
+
+        photo_names = os.listdir(f'data/images/{sex}')
+        photo_path = f'{sex}/' + random.choice(photo_names)
+        await self.update_profile(fname, lname, photo_path)
+        await self.update_db_data(fname, lname, sex, photo_path)
+        return {'first_name': fname, 'last_name': lname, 'photo_path': photo_path, 'sex': sex}
 
     async def message_handler(self, event: events.NewMessage.Event):
         chat = event.chat
@@ -138,18 +141,24 @@ class Client:
         client: TelegramClient = session.client
         if chat.username in channel_logins[0:1]:
             try:
+                if not random.randint(0, 1):
+                    print('not send')
+                    logger.info(f'not send {event.message.id} in {chat.username}')
+                    log_to_channel(f'not send {event.message.id} in {chat.username}')
+                    return
+
                 log_to_channel(f'new message in {chat.username}')
                 logger.info(f'new message in {chat.username}')
                 print(chat.username)
-                # result = await client(functions.messages.SendReactionRequest(
-                #     peer=chat,
-                #     msg_id=event.message.id,
-                #     add_to_recent=True,
-                #     reaction=[types.ReactionEmoji(
-                #         emoticon=u"\u2764"
-                #     )]
-                # ))
-                # print(result)
+                result = await client(functions.messages.SendReactionRequest(
+                    peer=chat,
+                    msg_id=event.message.id,
+                    add_to_recent=True,
+                    reaction=[types.ReactionEmoji(
+                        emoticon=random.choice('👍❤️🔥')
+                    )]
+                ))
+                print(result)
                 me: TgClient = await db.get_client(session.session_id)
 
                 await client(

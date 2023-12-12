@@ -1,6 +1,6 @@
 from enum import Enum
 
-from sqlalchemy import String, Integer, Column, Table, ForeignKey, UniqueConstraint, SmallInteger
+from sqlalchemy import String, Integer, Column, Table, ForeignKey, UniqueConstraint, SmallInteger, Boolean
 from sqlalchemy.orm import DeclarativeBase, mapped_column, relationship
 
 
@@ -28,6 +28,7 @@ association_table = Table(
     Base.metadata,
     Column('client_id', Integer, ForeignKey('client.id', ondelete='CASCADE')),
     Column('channel_id', Integer, ForeignKey('channel.id', ondelete='CASCADE')),
+    Column('is_tracking', Boolean, default=False),
     UniqueConstraint('client_id', 'channel_id', name='uq_client_channel')
 
 )
@@ -58,6 +59,7 @@ class TgClient(Base):
     about = Column(String())
     sex = Column(SmallInteger(), default=0)
     photo_path = Column(String(255))
+    role = Column(String(), nullable=True)
     joined_channels = relationship('TgChannel', secondary=association_table, back_populates='joined_clients')
 
     def __str__(self):

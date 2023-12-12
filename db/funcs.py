@@ -88,8 +88,8 @@ async def get_joined_clients(channel: TgChannel, session: AsyncSession):
 
 
 @with_session
-async def get_joined_channels(client: TgClient, session: AsyncSession):
-    query = await session.execute(select(association_table).filter_by(client_id=client.id))
+async def get_joined_channels(client: TgClient, session: AsyncSession, is_tracking=False):
+    query = await session.execute(select(association_table).filter_by(client_id=client.id, is_tracking=is_tracking))
     return list(query.scalars())
 
 
