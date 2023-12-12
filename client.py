@@ -48,6 +48,7 @@ class Client:
         except Exception as ex:
             logger.error(traceback.format_exc())
             print(traceback.format_exc())
+            await self.client.run_until_disconnected()
             await self.client.disconnect()
         except KeyboardInterrupt:
             await self.client.disconnect()
@@ -145,10 +146,8 @@ class Client:
                 if not random.randint(0, 1):
                     print('not send')
                     logger.info(f'not send {event.message.id} in {chat.username}')
-                    log_to_channel(f'not send {event.message.id} in {chat.username}')
                     return
 
-                log_to_channel(f'new message in {chat.username}')
                 logger.info(f'new message in {chat.username}')
                 print(chat.username)
                 result = await client(functions.messages.SendReactionRequest(
