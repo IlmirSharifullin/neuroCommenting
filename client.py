@@ -23,11 +23,9 @@ class Client:
             test = await db.test()
             print(test)
             logger.info(test)
-            print('run')
-            log_to_channel(f"running {self.session_id}")
+            logger.info(f"running {self.session_id}")
             await self.client.connect()
-            print('get me')
-            log_to_channel(f'connected to {self.session_id}')
+            logger.info(f'connected to {self.session_id}')
             me = await db.get_client(self.session_id)
             if me is None:
                 me = await db.insert_client(self.session_id)
@@ -42,7 +40,7 @@ class Client:
             await self.subscribe_channels()
             logger.info(f'{me.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
             print('старт')
-            log_to_channel(f'start {self.session_id}')
+            logger.info(f'start {self.session_id}')
             needs = True
             if needs:
                 self.client.add_event_handler(self.message_handler, events.NewMessage())

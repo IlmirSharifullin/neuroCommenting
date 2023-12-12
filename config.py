@@ -22,12 +22,14 @@ async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 
 class CustomLogger(logging.Logger):
-    def info(self, msg, *args, **kwargs):
-        log_to_channel(msg, 'info')
+    def info(self, msg, *args, to_channel=True, **kwargs):
+        if to_channel:
+            log_to_channel(msg, 'info')
         super().info(msg, *args, **kwargs)
 
-    def error(self, msg, *args, **kwargs):
-        log_to_channel(msg, 'error')
+    def error(self, msg, *args, to_channel=True, **kwargs):
+        if to_channel:
+            log_to_channel(msg, 'error')
         super().error(msg, *args, **kwargs)
 
 
