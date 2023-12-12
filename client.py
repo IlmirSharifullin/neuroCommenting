@@ -28,8 +28,8 @@ class Client:
             logger.info(f'connected to {self.session_id}')
             me = await db.get_client(self.session_id)
             if me is None:
-                me = await db.insert_client(self.session_id)
-                print(me)
+                await db.insert_client(self.session_id)
+                me = await db.get_client(self.session_id)
             await asyncio.sleep(5)
 
             # await self.set_random_data()
