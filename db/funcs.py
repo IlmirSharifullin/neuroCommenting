@@ -112,3 +112,10 @@ async def update_data(session_id: str, session: AsyncSession, first_name: str = 
                                                                  about=about or client.about))
 
     return await session.commit()
+
+
+@with_session
+async def test(session: AsyncSession):
+    query = await session.execute(select(TgClient))
+    clients = list(query.scalars())[0]
+    return clients

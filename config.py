@@ -11,20 +11,30 @@ DB_URL = os.getenv('DB_URL')
 LOGS_CHANNEL_ID = os.getenv('LOGS_CHANNEL_ID')
 
 
-def log_to_channel(msg):
+def log_to_channel(msg, type='info'):
     res = requests.post('https://api.telegram.org/bot6621958158:AAFIALtB_WkdK1YbXZ_dBfkLxzVR6xAjPK0/sendMessage',
-                        params={'text': msg, 'chat_id': LOGS_CHANNEL_ID})
-    print(res.text)
+                        params={'text': ('ERROR:\n' if type == 'error' else 'INFO:\n') + str(msg),
+                                'chat_id': LOGS_CHANNEL_ID})
 
 
 engine = create_async_engine(url=DB_URL, echo=False)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 
-def setup_logger():
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+class CustomLogger(logging.Logger):
+    def info(self, msg, *args, **kwargs):
+        log_to_channel(msg, 'info')
+        super().info(msg, *args, **kwargs)
 
-    return logging.getLogger(__name__)
+    def error(self, msg, *args, **kwargs):
+        log_to_channel(msg, 'error')
+        super().error(msg, *args, **kwargs)
+
+
+def setup_logger():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+    return CustomLogger(__name__)
 
 
 logger = setup_logger()

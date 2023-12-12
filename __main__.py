@@ -42,7 +42,6 @@ async def connect_sessions(*sessions):
             print(id)
             continue
         except Exception as ex:
-            log_to_channel(traceback.format_exc())
             logger.info(traceback.format_exc())
             print(traceback.format_exc())
             print(id)

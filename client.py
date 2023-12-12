@@ -20,9 +20,10 @@ class Client:
 
     async def run(self):
         try:
+            test = await db.test()
+            print(test)
+            logger.info(test)
             print('run')
-            logger.info(len(await db.get_channels()))
-            print(await db.get_channels())
             log_to_channel(f"running {self.session_id}")
             await self.client.connect()
             print('get me')
@@ -47,7 +48,7 @@ class Client:
                 self.client.add_event_handler(self.message_handler, events.NewMessage())
             await self.client.run_until_disconnected()
         except Exception as ex:
-            log_to_channel(traceback.format_exc())
+            logger.error(traceback.format_exc())
             print(traceback.format_exc())
             await self.client.disconnect()
         except KeyboardInterrupt:
@@ -88,7 +89,6 @@ class Client:
             log_to_channel(f'{self.session_id} client banned')
             print(self.session_id)
         except Exception as ex:
-            log_to_channel(traceback.format_exc())
             logger.error(traceback.format_exc())
             print(ex)
 
@@ -174,6 +174,5 @@ class Client:
                 await asyncio.sleep(10)
                 await client.send_message(chat, text, comment_to=event.message.id)
             except Exception as ex:
-                log_to_channel(traceback.format_exc())
                 logger.error(traceback.format_exc())
                 print(traceback.format_exc())
