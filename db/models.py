@@ -5,8 +5,9 @@ from sqlalchemy.orm import DeclarativeBase, mapped_column, relationship
 
 
 class ClientStatusEnum(Enum):
-    OK = 1
+    USING = 1
     BANNED = 2
+    FREE = 3
 
 
 class ChannelStatusEnum(Enum):
@@ -63,4 +64,4 @@ class TgClient(Base):
     joined_channels = relationship('TgChannel', secondary=association_table, back_populates='joined_clients')
 
     def __str__(self):
-        return f'Client <{self.session_id}>'
+        return f'Client <{self.session_id}, {self.status}>'

@@ -14,7 +14,7 @@ from typing import Callable, List, Optional
 
 def with_session(func: Callable) -> Callable:
     @wraps(func)
-    async def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs) -> func.__annotations__.get('return', None):
         try:
             async with async_session_maker() as session:
                 result = await func(*args, session, **kwargs)
@@ -48,7 +48,8 @@ async def get_client(session_id: str, session: AsyncSession) -> TgClient:
 @with_session
 async def insert_channel(chat_id: int, username: str, session: AsyncSession) -> Optional[TgChannel]:
     try:
-        channel = await session.execute(insert(TgChannel).values(chat_id=chat_id, username=username).returning(TgChannel))
+        channel = await session.execute(
+            insert(TgChannel).values(chat_id=chat_id, username=username).returning(TgChannel))
         await session.commit()
         return channel.scalar()
     except Exception as ex:
@@ -57,9 +58,11 @@ async def insert_channel(chat_id: int, username: str, session: AsyncSession) -> 
 
 
 @with_session
-async def insert_client(session_id: str, session: AsyncSession, status=ClientStatusEnum.OK.value) -> Optional[TgClient]:
+async def insert_client(session_id: str, session: AsyncSession, status=ClientStatusEnum.USING.value) -> Optional[
+    TgClient]:
     try:
-        client = await session.execute(insert(TgClient).values(session_id=session_id, status=status).returning(TgClient))
+        client = await session.execute(
+            insert(TgClient).values(session_id=session_id, status=status).returning(TgClient))
         client = client.scalar()
         await session.commit()
         return client
@@ -69,15 +72,15 @@ async def insert_client(session_id: str, session: AsyncSession, status=ClientSta
 
 
 @with_session
-async def set_banned_status(session_id: str, session: AsyncSession):
+async def set_status(session_id: str, status: ClientStatusEnum, session: AsyncSession):
     cli: TgClient = await get_client(session_id)
 
     if cli is None:
-        await insert_client(session_id, status=ClientStatusEnum.BANNED.value)
+        await insert_client(session_id, status=status.value)
     else:
-        cli.status = ClientStatusEnum.BANNED.value
-        await session.execute(
-            update(TgClient).values(status=ClientStatusEnum.BANNED.value).filter_by(session_id=session_id))
+        await session.execute(update(TgClient)
+                              .values(status=status.value)
+                              .filter_by(session_id=session_id))
         await session.commit()
 
 
@@ -101,7 +104,7 @@ async def add_join(client: TgClient, channel: TgChannel, session: AsyncSession):
 
 @with_session
 async def update_data(session_id: str, session: AsyncSession, first_name: str = None, last_name: str = None,
-                      sex: int = None, photo_path: str = None, about: str = None):
+                      sex: int = None, photo_path: str = None, about: str = None, role: str = None):
     print('update db')
     client: TgClient = await get_client(session_id)
     await session.execute(
@@ -109,9 +112,17 @@ async def update_data(session_id: str, session: AsyncSession, first_name: str = 
                                                                  last_name=last_name or client.last_name,
                                                                  sex=sex or client.sex,
                                                                  photo_path=photo_path or client.photo_path,
-                                                                 about=about or client.about))
+                                                                 about=about or client.about,
+                                                                 role=role or client.role))
 
     return await session.commit()
+
+
+@with_session
+async def get_random_free_session(session: AsyncSession):
+    query = await session.execute(select(TgClient).filter_by(status=ClientStatusEnum.FREE.value).limit(1))
+    client = query.scalar()
+    return client.session_id
 
 
 @with_session

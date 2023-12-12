@@ -43,7 +43,6 @@ logger = setup_logger()
 
 channel_logins = [
     'qwe125412',
-    'light_almetyevsk',
     'aznakaevo',
     'bugulma',
     'ligth_mendeleevsk',

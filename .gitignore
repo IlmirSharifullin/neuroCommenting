@@ -2,5 +2,3 @@
 .env.prod
 .log
 logs.log
-test.py
-chatgpt/test.py

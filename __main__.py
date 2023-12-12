@@ -19,26 +19,11 @@ async def delay(coro, seconds):
 
 async def connect_sessions(*sessions):
     tasks = []
-    for id, proxy_index in sessions:  # id - phone number
-        with open(f'sessions/{id}/{id}.json') as f:
-            data = json.load(f)
-            app_id = data['app_id']
-            app_hash = data['app_hash']
-        session_path = f'sessions/{id}/{id}'
-
+    for id, proxy_index in sessions:
         try:
-            proxy = Proxy(proxy_index)
-            client = TelegramClient(session_path, app_id, app_hash,
-                                    proxy=proxy.dict,
-                                    device_model="iPhone 13 Pro Max",
-                                    system_version="4.16.30-vxCUSTOM",
-                                    app_version="8.4",
-                                    lang_code="en",
-                                    system_lang_code="en-US"
-                                    )
-            cli = Client(client, id)
+            cli = Client(id, proxy_index)
         except UserDeactivatedBanError as ex:
-            await db.set_banned_status(id)
+            await db.set_status(id, db.ClientStatusEnum.BANNED)
             print(id)
             continue
         except Exception as ex:

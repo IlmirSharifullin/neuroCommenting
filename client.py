@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import json
 import os
 import random
 import traceback
@@ -11,47 +12,80 @@ from config import channel_logins, logger, log_to_channel
 import db.funcs as db
 import chatgpt.funcs as gpt
 from db.models import TgClient
+from proxies.proxy import Proxy
 
 
 class Client:
-    def __init__(self, client: TelegramClient, session_id):
-        self.client = client
+    def __init__(self, session_id, proxy_id):
         self.session_id = session_id
+        self.proxy_id = proxy_id
+        self.init_session()
+
+    def init_session(self):
+        with open(f'sessions/{self.session_id}/{self.session_id}.json') as f:
+            data = json.load(f)
+            app_id = data['app_id']
+            app_hash = data['app_hash']
+        session_path = f'sessions/{self.session_id}/{self.session_id}'
+
+        proxy = Proxy(self.proxy_id)
+
+        client = TelegramClient(session_path, app_id, app_hash,
+                                proxy=proxy.dict,
+                                device_model="iPhone 13 Pro Max",
+                                system_version="4.16.30-vxCUSTOM",
+                                app_version="8.4",
+                                lang_code="en",
+                                system_lang_code="en-US"
+                                )
+        self.client = client
+
+    async def start(self):
+        try:
+            await self.client.connect()
+            if await self.client.is_user_authorized():
+                await self.client.start()
+                return True
+        except Exception as ex:
+            print(ex)
+            print(traceback.format_exc())
+        return False
 
     async def run(self):
+        if await self.start():
+            await self.main()
+        else:
+            await self.replace_session()
+
+    async def main(self):
         try:
-            test = await db.test()
-            print(test)
-            logger.info(test)
+
             logger.info(f"running {self.session_id}")
-            await self.client.connect()
-            logger.info(f'connected to {self.session_id}')
-            me = await db.get_client(self.session_id)
-            if me is None:
-                await db.insert_client(self.session_id)
+            async with self.client:
+                logger.info(f'connected to {self.session_id}')
                 me = await db.get_client(self.session_id)
-            await asyncio.sleep(5)
+                if me is None:
+                    await db.insert_client(self.session_id)
+                    me = await db.get_client(self.session_id)
+                await asyncio.sleep(5)
 
-            # await self.set_random_data()
+                # await self.set_random_data()
 
-            print(me.session_id)
-            logger.info(f'{me.session_id} - started subscribing')
-            start_time = datetime.datetime.now()
-            await self.subscribe_channels()
-            logger.info(f'{me.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
-            print('старт')
-            logger.info(f'start {self.session_id}')
-            needs = True
-            if needs:
-                self.client.add_event_handler(self.message_handler, events.NewMessage())
-            await self.client.run_until_disconnected()
+                logger.info(f'{self.session_id} - started subscribing')
+                start_time = datetime.datetime.now()
+                await self.subscribe_channels()
+                logger.info(f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
+
+                print('старт')
+                logger.info(f'start {self.session_id}')
+
+                needs = True
+                if needs:
+                    self.client.add_event_handler(self.message_handler, events.NewMessage())
+                await self.client.run_until_disconnected()
         except Exception as ex:
             logger.error(traceback.format_exc())
             print(traceback.format_exc())
-            await self.client.run_until_disconnected()
-            await self.client.disconnect()
-        except KeyboardInterrupt:
-            await self.client.disconnect()
 
     async def subscribe_channels(self):
         try:
@@ -84,9 +118,9 @@ class Client:
                         await asyncio.sleep(sleep_time)
 
         except UserDeactivatedBanError as ex:
-            await db.set_banned_status(self.session_id)
-            log_to_channel(f'{self.session_id} client banned')
-            print(self.session_id)
+            await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
+            logger.info(f'{self.session_id} client banned')
+            await self.replace_session()
         except Exception as ex:
             logger.error(traceback.format_exc())
             print(ex)
@@ -130,12 +164,41 @@ class Client:
             names = f.read().split('\n')
             lname = random.choice(names)
 
-
         photo_names = os.listdir(f'data/images/{sex}')
         photo_path = f'{sex}/' + random.choice(photo_names)
         await self.update_profile(fname, lname, photo_path)
         await self.update_db_data(fname, lname, sex, photo_path)
         return {'first_name': fname, 'last_name': lname, 'photo_path': photo_path, 'sex': sex}
+
+    async def set_profile(self):
+        db_client: TgClient = await db.get_client(self.session_id)
+        await self.update_profile(db_client.first_name, db_client.last_name, db_client.photo_path, db_client.about)
+
+    async def copy_old_client(self, old_session_id):
+        old_client: TgClient = await db.get_client(old_session_id)
+        await db.update_data(self.session_id,
+                             first_name=old_client.first_name,
+                             last_name=old_client.last_name,
+                             sex=old_client.sex,
+                             photo_path=old_client.photo_path,
+                             about=old_client.about,
+                             role=old_client.role)
+
+    async def replace_session(self):
+        new_session_id = await db.get_random_free_session()
+        old_session_id = self.session_id
+        print(new_session_id)
+        self.session_id = new_session_id
+
+        self.init_session()
+        await self.copy_old_client(old_session_id)
+
+        if await self.start():
+            await self.set_profile()
+            await db.set_status(self.session_id, db.ClientStatusEnum.USING)
+            await self.main()
+        else:
+            await self.replace_session()
 
     async def message_handler(self, event: events.NewMessage.Event):
         chat = event.chat
