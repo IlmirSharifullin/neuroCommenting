@@ -21,6 +21,8 @@ class Client:
     async def run(self):
         try:
             print('run')
+            logger.info(len(db.get_channels()))
+            print(db.get_channels())
             log_to_channel(f"running {self.session_id}")
             await self.client.connect()
             print('get me')
@@ -39,6 +41,7 @@ class Client:
             await self.subscribe_channels()
             logger.info(f'{me.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
             print('старт')
+            log_to_channel(f'start {self.session_id}')
             needs = True
             if needs:
                 self.client.add_event_handler(self.message_handler, events.NewMessage())

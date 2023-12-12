@@ -22,7 +22,7 @@ async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
 
 def setup_logger():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
     return logging.getLogger(__name__)
 
