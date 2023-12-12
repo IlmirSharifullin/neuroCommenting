@@ -8,4 +8,6 @@ COPY . .
 RUN apt-get update && apt-get install -y libpq-dev python3-dev
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
+RUN alembic upgrade head
+
 CMD [ "python", "__main__.py"]
