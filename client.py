@@ -21,8 +21,8 @@ class Client:
     async def run(self):
         try:
             print('run')
-            logger.info(len(db.get_channels()))
-            print(db.get_channels())
+            logger.info(len(await db.get_channels()))
+            print(await db.get_channels())
             log_to_channel(f"running {self.session_id}")
             await self.client.connect()
             print('get me')
