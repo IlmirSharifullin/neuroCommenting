@@ -64,6 +64,7 @@ class Client:
 
     async def main(self):
         try:
+            log_to_channel(await db.get_client(self.session_id))
             await self.test_client()
             await db.set_status(self.session_id, db.ClientStatusEnum.USING)
             await asyncio.sleep(5)
