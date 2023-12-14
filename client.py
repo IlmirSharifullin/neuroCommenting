@@ -239,7 +239,7 @@ class Client:
                     msg_id=event.message.id,
                     add_to_recent=True,
                     reaction=[types.ReactionEmoji(
-                        emoticon=random.choice('👍❤️🔥')
+                        emoticon=random.choice(['👍','❤','️🔥'])
                     )]
                 ))
                 print(res)
