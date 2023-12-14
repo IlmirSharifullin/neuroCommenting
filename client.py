@@ -46,18 +46,20 @@ class Client:
     async def start(self):
         try:
             await self.client.connect()
+            logger.info('connect')
             if await self.client.is_user_authorized():
                 await self.client.start()
                 return True
         except Exception as ex:
-            print(ex)
-            print(traceback.format_exc())
+            logger.error(traceback.format_exc())
         return False
 
     async def run(self):
+
         if await self.start():
             await self.main()
         else:
+
             shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
             await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
             await self.replace_session()
@@ -197,6 +199,7 @@ class Client:
         pass
 
     async def replace_session(self):
+        logger.error(f'replace {self.session_id}')
         new_session_id = await db.get_random_free_session()
         if not new_session_id:
             logger.error('No free sessions')

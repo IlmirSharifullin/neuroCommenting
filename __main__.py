@@ -27,8 +27,7 @@ async def connect_sessions(*sessions):
             print(id)
             continue
         except Exception as ex:
-            logger.info(traceback.format_exc())
-            print(traceback.format_exc())
+            logger.error(traceback.format_exc())
             print(id)
 
             continue
@@ -44,7 +43,7 @@ async def connect_sessions(*sessions):
 async def main():
     sessions = [('12098898404', 0, [1805203089]), ('12098898436', 1), ('12098898668', 2), ('12102692058', 3), ('12102738279', 4), ("13527688414")]
     sessions = sessions[0:1]
-    logger.info(await db.get_client('12098898404'))
+    logger.info('test db ' + await db.get_client('12098898404'))
 
     tasks = await connect_sessions(*sessions)
     await asyncio.wait(tasks)
