@@ -5,6 +5,7 @@ import os
 import random
 import shutil
 import traceback
+from typing import List
 
 from telethon import TelegramClient, events, functions, types
 from telethon.errors import UserDeactivatedBanError
@@ -12,12 +13,12 @@ from telethon.errors import UserDeactivatedBanError
 from config import channel_logins, logger, log_to_channel
 import db.funcs as db
 import chatgpt.funcs as gpt
-from db.models import TgClient
+from db.models import TgClient, TgChannel
 from proxies.proxy import Proxy
 
 
 class Client:
-    def __init__(self, session_id, proxy_id, listening_channels):
+    def __init__(self, session_id, proxy_id, listening_channels: List[str]):
         self.session_id = session_id
         self.proxy_id = proxy_id
         self.listening_channels = listening_channels
@@ -81,7 +82,7 @@ class Client:
 
             logger.info(f'{self.session_id} - started subscribing')
             start_time = datetime.datetime.now()
-            await self.subscribe_channels()
+            await self._subscribe_channels()
             logger.info(f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
 
             print('старт')
@@ -132,6 +133,63 @@ class Client:
                     sleep_time = random.randint(5 * 60, 10 * 60)
                     print(f'{me} joins {username}. Sleep for {sleep_time}...')
                     await asyncio.sleep(sleep_time)
+
+    async def _subscribe_channels(self):
+        me = await db.get_client(self.session_id)
+        for i, obj in enumerate(self.listening_channels):
+            try:
+                if obj.startswith('+'):
+                    invite_link = obj[1:]
+                    try:
+                        entity = await self.client.get_entity(
+                            'https://t.me/joinchat/' + invite_link)  # exists and joined
+                    except Exception as ex:
+                        if 'you are not part of' in str(ex):  # Exists but not joined
+                            res1 = await self.client(functions.messages.ImportChatInviteRequest(invite_link))
+                            entity = res1.chats[0]
+
+                            channel: TgChannel = await db.get_channel(entity.id)
+                            if channel is None:
+                                channel = await db.insert_channel(entity.id, entity.username)
+                            await db.add_join(me, channel)
+
+                            sleep_time = random.randint(5 * 60, 10 * 60)
+                            print(f'{me} joins {entity.id}. Sleep for {sleep_time}...')
+                            await asyncio.sleep(sleep_time)
+                        else:  # Not exists
+                            logger.error(traceback.format_exc())
+                            continue
+                    print(entity)
+                    self.listening_channels[i] = entity.id
+                else:
+                    joined_channels = await db.get_joined_channels(me)
+                    channel: TgChannel = await db.get_channel(obj)
+                    if channel is not None:
+                        if channel.id not in [i.channel_id for i in joined_channels]:
+                            # канал есть в бд, но юзер не подписан
+                            entity = await self.client.get_entity(obj)
+                            await self.client(functions.channels.JoinChannelRequest(entity))
+                            await db.add_join(me, channel)
+
+                            sleep_time = random.randint(5 * 60, 10 * 60)
+                            print(f'{me} joins {entity.id}. Sleep for {sleep_time}...')
+                            await asyncio.sleep(sleep_time)
+                    else:
+                        # канала нет в бд, нужно добавить
+                        entity = await self.client.get_entity(obj)
+                        if not isinstance(entity, types.Channel):
+                            logger.error('Wrong username of channel')
+                            continue
+
+                        channel = await db.insert_channel(entity.id, entity.username)
+                        await self.client(functions.channels.JoinChannelRequest(entity))
+                        await db.add_join(me, channel)
+
+                        sleep_time = random.randint(5 * 60, 10 * 60)
+                        print(f'{me} joins {entity.id}. Sleep for {sleep_time}...')
+                        await asyncio.sleep(sleep_time)
+            except Exception as ex:
+                logger.error(ex)
 
     async def test_client(self):
         print('test', await self.client.get_me())
@@ -227,12 +285,12 @@ class Client:
         # print(chat)
         if chat.id in self.listening_channels or chat.username in self.listening_channels:
             try:
-                if not random.randint(0, 1):
-                    print('not send')
-                    logger.info(f'not send {event.message.id} in {chat.username}')
-                    return
+                # if not random.randint(0, 1):
+                #     print('not send')
+                #     logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
+                #     return
 
-                logger.info(f'new message in {chat.username}')
+                logger.info(f'new message in {chat.username or chat.id}')
 
                 await client(
                     functions.messages.GetMessagesViewsRequest(peer=chat, id=[event.message.id], increment=True))
@@ -242,10 +300,9 @@ class Client:
                     msg_id=event.message.id,
                     add_to_recent=True,
                     reaction=[types.ReactionEmoji(
-                        emoticon=random.choice(['👍','❤','️🔥'])
+                        emoticon=random.choice(['👍', '❤', '️🔥'])
                     )]
                 ))
-                print(res)
 
                 me: TgClient = await db.get_client(self.session_id)
 

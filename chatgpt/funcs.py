@@ -1,6 +1,7 @@
 import asyncio
 from openai import OpenAI
 from dotenv import load_dotenv
+from config import logger
 
 load_dotenv()
 
@@ -11,7 +12,6 @@ WORKING_TIME = 20
 
 async def get_comment(post: str, role: str):
     # start_time = datetime.datetime.now()
-
     completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -20,7 +20,6 @@ async def get_comment(post: str, role: str):
         ],
         max_tokens=200,
     )
-    print(completion.choices[0].message.content)
 
     # end_time = datetime.datetime.now()
     # sleep_time = math.ceil(WORKING_TIME - (end_time - start_time).total_seconds())

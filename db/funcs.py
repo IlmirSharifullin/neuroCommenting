@@ -34,8 +34,8 @@ async def get_channels(session: AsyncSession) -> List[TgChannel]:
 
 
 @with_session
-async def get_channel(username: str, session: AsyncSession):
-    query = await session.execute(select(TgChannel).where(TgChannel.username == username))
+async def get_channel(data: str, session: AsyncSession):
+    query = await session.execute(select(TgChannel).where(TgChannel.username == data or TgChannel.chat_id == data))
     return query.scalar()
 
 
@@ -91,8 +91,8 @@ async def get_joined_clients(channel: TgChannel, session: AsyncSession):
 
 
 @with_session
-async def get_joined_channels(client: TgClient, session: AsyncSession, is_tracking=False):
-    query = await session.execute(select(association_table).filter_by(client_id=client.id, is_tracking=is_tracking))
+async def get_joined_channels(client: TgClient, session: AsyncSession):
+    query = await session.execute(select(association_table).filter_by(client_id=client.id))
     return list(query.scalars())
 
 
