@@ -44,7 +44,7 @@ async def connect_sessions(*sessions):
 async def main():
     sessions = [('12098898404', 0, [1805203089]), ('12098898436', 1), ('12098898668', 2), ('12102692058', 3), ('12102738279', 4), ("13527688414")]
     sessions = sessions[0:1]
-    log_to_channel(await db.get_client('12098898404'))
+    logger.info(await db.get_client('12098898404'))
 
     tasks = await connect_sessions(*sessions)
     await asyncio.wait(tasks)
