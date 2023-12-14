@@ -108,7 +108,8 @@ async def main():
     #         print(traceback.format_exc())
     #         continue
 
-
+    cli = Client('12098898404', 0)
+    print(await cli.start())
 
 
 asyncio.run(main())

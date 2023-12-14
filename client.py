@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import random
+import shutil
 import traceback
 
 from telethon import TelegramClient, events, functions, types
@@ -16,9 +17,11 @@ from proxies.proxy import Proxy
 
 
 class Client:
-    def __init__(self, session_id, proxy_id):
+    def __init__(self, session_id, proxy_id, listening_channels):
         self.session_id = session_id
         self.proxy_id = proxy_id
+        self.listening_channels = listening_channels
+
         self.init_session()
 
     def init_session(self):
@@ -55,75 +58,80 @@ class Client:
         if await self.start():
             await self.main()
         else:
+            shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
+            await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
             await self.replace_session()
 
     async def main(self):
         try:
-
+            await self.test_client()
+            await db.set_status(self.session_id, db.ClientStatusEnum.USING)
+            await asyncio.sleep(5)
             logger.info(f"running {self.session_id}")
-            async with self.client:
-                logger.info(f'connected to {self.session_id}')
+            me = await db.get_client(self.session_id)
+            if me is None:
+                await db.insert_client(self.session_id)
                 me = await db.get_client(self.session_id)
-                if me is None:
-                    await db.insert_client(self.session_id)
-                    me = await db.get_client(self.session_id)
-                await asyncio.sleep(5)
+            await asyncio.sleep(5)
 
-                # await self.set_random_data()
+            # await self.set_random_data()
 
-                logger.info(f'{self.session_id} - started subscribing')
-                start_time = datetime.datetime.now()
-                await self.subscribe_channels()
-                logger.info(f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
+            logger.info(f'{self.session_id} - started subscribing')
+            start_time = datetime.datetime.now()
+            await self.subscribe_channels()
+            logger.info(f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
 
-                print('старт')
-                logger.info(f'start {self.session_id}')
+            print('старт')
+            logger.info(f'start {self.session_id}')
 
-                needs = True
-                if needs:
-                    self.client.add_event_handler(self.message_handler, events.NewMessage())
-                await self.client.run_until_disconnected()
+            needs = True
+            if needs:
+                self.client.add_event_handler(self.message_handler, events.NewMessage())
+            await self.client.run_until_disconnected()
+        except UserDeactivatedBanError:
+            await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
+            shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
+            logger.info(f'{self.session_id} client banned')
+            await self.replace_session()
         except Exception as ex:
             logger.error(traceback.format_exc())
             print(traceback.format_exc())
 
     async def subscribe_channels(self):
-        try:
-            me = await db.get_client(self.session_id)
-            print(me)
-            channels = await db.get_channels()
-            channels_usernames = [channel.username for channel in channels]
-            for username in channel_logins:
-                entity = None
-                if username not in channels_usernames:
-                    print(username)
-                    entity = await self.client.get_entity(username)
-                    channel = await db.insert_channel(entity.id, entity.username)
-                    channels_usernames.append(channel.username)
-                    print(channel)
-                else:
-                    channel = await db.get_channel(username)
+        me = await db.get_client(self.session_id)
+        print(me)
+        channels = await db.get_channels()
+        channels_usernames = [channel.username for channel in channels]
+        for username in self.listening_channels:
+            entity = None
+            if username not in channels_usernames:
 
-                joined_clients = await db.get_joined_clients(channel)
-                if not joined_clients:
-                    joined_clients = []
-                if me.id not in joined_clients:
-                    if channel:
-                        if entity is None:
-                            entity = await self.client.get_entity(username)
-                        await self.client(functions.channels.JoinChannelRequest(entity))
-                        await db.add_join(me, channel)
-                        sleep_time = random.randint(10 * 60, 20 * 60)
-                        print(f'{me} joins {username}. Sleep for {sleep_time}...')
-                        await asyncio.sleep(sleep_time)
+                print(username)
+                if isinstance(username, int):
+                    continue
+                await self.client(functions.messages.ImportChatInviteRequest())
+                entity = await self.client.get_entity(username)
+                channel = await db.insert_channel(entity.id, entity.username)
+                channels_usernames.append(channel.username)
+                print(channel)
+            else:
+                channel = await db.get_channel(username)
 
-        except UserDeactivatedBanError as ex:
-            await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
-            logger.info(f'{self.session_id} client banned')
-            await self.replace_session()
-        except Exception as ex:
-            logger.error(traceback.format_exc())
-            print(ex)
+            joined_clients = await db.get_joined_clients(channel)
+            if not joined_clients:
+                joined_clients = []
+            if me.id not in joined_clients:
+                if channel:
+                    if entity is None:
+                        entity = await self.client.get_entity(username)
+                    await self.client(functions.channels.JoinChannelRequest(entity))
+                    await db.add_join(me, channel)
+                    sleep_time = random.randint(5 * 60, 10 * 60)
+                    print(f'{me} joins {username}. Sleep for {sleep_time}...')
+                    await asyncio.sleep(sleep_time)
+
+    async def test_client(self):
+        print('test', await self.client.get_me())
 
     async def get_joined_channels(self):
         me = await db.get_client(self.session_id)
@@ -184,8 +192,14 @@ class Client:
                              about=old_client.about,
                              role=old_client.role)
 
+    async def set_listening_channels(self):
+        pass
+
     async def replace_session(self):
         new_session_id = await db.get_random_free_session()
+        if not new_session_id:
+            logger.error('No free sessions')
+            return
         old_session_id = self.session_id
         print(new_session_id)
         self.session_id = new_session_id
@@ -198,13 +212,16 @@ class Client:
             await db.set_status(self.session_id, db.ClientStatusEnum.USING)
             await self.main()
         else:
+            await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
+            shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
             await self.replace_session()
 
     async def message_handler(self, event: events.NewMessage.Event):
         chat = event.chat
-        session = self
-        client: TelegramClient = session.client
-        if chat.username in channel_logins[0:1]:
+
+        client: TelegramClient = self.client
+        # print(chat)
+        if chat.id in self.listening_channels or chat.username in self.listening_channels:
             try:
                 if not random.randint(0, 1):
                     print('not send')
@@ -212,8 +229,11 @@ class Client:
                     return
 
                 logger.info(f'new message in {chat.username}')
-                print(chat.username)
-                result = await client(functions.messages.SendReactionRequest(
+
+                await client(
+                    functions.messages.GetMessagesViewsRequest(peer=chat, id=[event.message.id], increment=True))
+                await asyncio.sleep(1)
+                res = await client(functions.messages.SendReactionRequest(
                     peer=chat,
                     msg_id=event.message.id,
                     add_to_recent=True,
@@ -221,15 +241,15 @@ class Client:
                         emoticon=random.choice('👍❤️🔥')
                     )]
                 ))
-                print(result)
-                me: TgClient = await db.get_client(session.session_id)
+                print(res)
 
-                await client(
-                    functions.messages.GetMessagesViewsRequest(peer=chat, id=[event.message.id], increment=True))
+                me: TgClient = await db.get_client(self.session_id)
+
                 sleep_time = random.randint(30, 5 * 60)
                 print(sleep_time)
-                # await asyncio.sleep(sleep_time)
-                text = await gpt.get_comment(event.message.message, sex=me.sex)
+                await asyncio.sleep(sleep_time)
+
+                text = await gpt.get_comment(event.message.message, role=me.role)
                 print(text)
                 await asyncio.sleep(10)
                 await client.send_message(chat, text, comment_to=event.message.id)

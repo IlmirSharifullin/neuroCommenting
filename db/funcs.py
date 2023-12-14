@@ -122,7 +122,10 @@ async def update_data(session_id: str, session: AsyncSession, first_name: str = 
 async def get_random_free_session(session: AsyncSession):
     query = await session.execute(select(TgClient).filter_by(status=ClientStatusEnum.FREE.value).limit(1))
     client = query.scalar()
-    return client.session_id
+    if client:
+        return client.session_id
+    else:
+        return None
 
 
 @with_session

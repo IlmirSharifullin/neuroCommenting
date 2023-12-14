@@ -19,9 +19,9 @@ async def delay(coro, seconds):
 
 async def connect_sessions(*sessions):
     tasks = []
-    for id, proxy_index in sessions:
+    for id, proxy_index, listening_channels in sessions:
         try:
-            cli = Client(id, proxy_index)
+            cli = Client(id, proxy_index, listening_channels)
         except UserDeactivatedBanError as ex:
             await db.set_status(id, db.ClientStatusEnum.BANNED)
             print(id)
@@ -42,8 +42,8 @@ async def connect_sessions(*sessions):
 
 
 async def main():
-    sessions = [('12098898404', 0), ('12098898436', 1), ('12098898668', 2), ('12102692058', 3), ('12102738279', 4)]
-    sessions = sessions[1:-3]
+    sessions = [('12098898404', 0, [1805203089]), ('12098898436', 1), ('12098898668', 2), ('12102692058', 3), ('12102738279', 4), ("13527688414")]
+    sessions = sessions[0:1]
     tasks = await connect_sessions(*sessions)
     await asyncio.wait(tasks)
 

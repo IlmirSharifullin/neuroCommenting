@@ -1,40 +1,38 @@
-import os
-import time
-
 import asyncio
-import openai
 from openai import OpenAI
 from dotenv import load_dotenv
-
-from db.models import SexEnum
 
 load_dotenv()
 
 client = OpenAI()
 
-assistant_role = "You are an ordinary social media user, casually commenting on public updates. Your comments should sound like genuine human responses, including a few mistakes to make them more natural. Try to incorporate emotions, reflections from personal experiences, and everyday conversational phrases into your comments. Embrace your individual style and feel free to use informal language. Additionally, ensure that the length of your comments falls within the range of 50 to 250 characters. Use casual language and throw in an occasional emoticon. Do not write too much please."
+WORKING_TIME = 20
 
 
-async def get_comment(post: str, sex):
-    global assistant_role
-    sex = SexEnum(sex).value
-    age = 40
-    assistant_role += f"You are {sex} from Russia and you talk in Russian. And also are patriot of Russia, you are {age} years old. And you also do not understand english"
+async def get_comment(post: str, role: str):
+    # start_time = datetime.datetime.now()
+
     completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": assistant_role},
+            {"role": "system", "content": role},
             {"role": "user", "content": f"""Пост: {post}"""}
         ],
         max_tokens=200,
     )
     print(completion.choices[0].message.content)
-    casual = await get_casual(completion.choices[0].message.content, sex, age)
 
-    return casual
+    # end_time = datetime.datetime.now()
+    # sleep_time = math.ceil(WORKING_TIME - (end_time - start_time).total_seconds())
+    # print(sleep_time)
+    # time.sleep(max(0, sleep_time))
+
+    # casual = await get_casual(completion.choices[0].message.content)
+
+    return completion.choices[0].message.content
 
 
-async def get_casual(text: str, sex, age):
+async def get_casual(text: str):
     assistant = client.beta.assistants.create(
         name="Casual",
         instructions=f"Я хочу, чтобы ты переделывал мои сообщения (комментарии к постам) в разговорный стиль. Я буду давать комментарий, а ты его будешь переделывать под более разговорный. Не пиши слишком много, суть должна прослеживаться та же. Не удлинняй данный текст. Можешь даже сделать его короче. You are - {sex} and {age} years old. It is commentaries to some posts, not a 1v1 dialog. Не будь фамильярным.",
