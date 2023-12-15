@@ -105,6 +105,7 @@ class Client:
     async def subscribe_channels(self):
         me = await db.get_client(self.session_id)
         for i, obj in enumerate(self.listening_channels):
+            print(obj)
             try:
                 if obj.startswith('+'):
                     # invite_link given
@@ -126,11 +127,12 @@ class Client:
                         else:  # Not exists
                             logger.error(traceback.format_exc())
                             continue
-                    print(entity)
+
                     self.listening_channels[i] = entity.id
                 else:
                     # username given
                     joined_channels = await db.get_joined_channels(me)
+                    print(joined_channels)
                     channel: TgChannel = await db.get_channel(obj)
                     if channel is not None:
                         if channel.id not in [i.channel_id for i in joined_channels]:
