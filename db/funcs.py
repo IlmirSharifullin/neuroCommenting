@@ -35,7 +35,10 @@ async def get_channels(session: AsyncSession) -> List[TgChannel]:
 
 @with_session
 async def get_channel(data: str, session: AsyncSession):
-    query = await session.execute(select(TgChannel).where(TgChannel.username == data or TgChannel.chat_id == data))
+    if isinstance(data, int):
+        query = await session.execute(select(TgChannel).where(TgChannel.username == data))
+    else:
+        query = await session.execute(select(TgChannel).where(TgChannel.username == data or TgChannel.chat_id == data))
     return query.scalar()
 
 

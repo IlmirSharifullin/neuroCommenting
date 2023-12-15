@@ -32,7 +32,7 @@ class Client:
         session_path = f'sessions/{self.session_id}/{self.session_id}'
 
         proxy = Proxy(self.proxy_id)
-        logger.info(f'before init session: {session_path} {app_id} {app_hash}')
+        logger.info(f'before init session: {self.session_id}')
         client = TelegramClient(session_path, app_id, app_hash,
                                 proxy=proxy.dict,
                                 device_model="iPhone 13 Pro Max",
