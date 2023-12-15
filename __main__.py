@@ -41,7 +41,7 @@ async def connect_sessions(*sessions):
 
 
 async def main():
-    sessions = [('12098898404', 0, ['+EmHan_WSvDdmNDky']), ('12098898436', 1, ['+EmHan_WSvDdmNDky', '+9Q4o4muW2kxkMzky']), ('12098898668', 2), ('12102692058', 3), ('12102738279', 4), ("13527688414")]
+    sessions = [('12098898404', 0, ['+EmHan_WSvDdmNDky']), ('12098898436', 1, ['+EmHan_WSvDdmNDky', '+9Q4o4muW2kxkMzky']), ('12098898668', 2, ['+EmHan_WSvDdmNDky', '+9Q4o4muW2kxkMzky']), ('12102692058', 3), ('12102738279', 4)]
     sessions = sessions[1:2]
     logger.info('test db ' + str(await db.get_client('12098898404')))
 

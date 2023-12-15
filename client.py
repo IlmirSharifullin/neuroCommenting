@@ -58,9 +58,9 @@ class Client:
     async def run(self):
 
         if await self.start():
+            logger.info('before main')
             await self.main()
         else:
-
             shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
             await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
             await self.replace_session()
@@ -308,7 +308,8 @@ class Client:
 
                 sleep_time = random.randint(30, 5 * 60)
                 print(sleep_time)
-                await asyncio.sleep(sleep_time)
+                # logger.info(f'sleep for {sleep_time}')
+                # await asyncio.sleep(sleep_time)
 
                 text = await gpt.get_comment(event.message.message, role=me.role)
                 print(text)
