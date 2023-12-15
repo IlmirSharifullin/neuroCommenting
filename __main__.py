@@ -41,8 +41,12 @@ async def connect_sessions(*sessions):
 
 
 async def main():
-    sessions = [('12098898404', 0, ['+EmHan_WSvDdmNDky']), ('12098898436', 1, ['+EmHan_WSvDdmNDky', '+9Q4o4muW2kxkMzky']), ('12098898668', 2, ['+EmHan_WSvDdmNDky', '+9Q4o4muW2kxkMzky']), ('12102692058', 3), ('12102738279', 4)]
-    sessions = sessions[1:2]
+    channels = ['+EmHan_WSvDdmNDky', '+PG9C65bK6_k3MDI6', '+ie1wo23VFH4xZmYy', 'aznakaevo', '+XsUt7iTl7w8zNTMy', 'bugulma', '+HL12JzSXTAozMjJi']
+    sessions = ['12098898404', '12098898436', '12098898668', '12102692058', '12102738279', '12105738318', '12107103112', '12107103242', '12107103256', '12107106097', '12109565013', '12132348393']
+    for i in range(len(sessions)):
+        proxy_id = i % Proxy.proxy_count
+        sessions[i] = (sessions[i], proxy_id, [channels[0], channels[i//2 + 1]])
+
     logger.info('test db ' + str(await db.get_client('12098898404')))
 
     tasks = await connect_sessions(*sessions)

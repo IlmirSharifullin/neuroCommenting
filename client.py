@@ -83,7 +83,7 @@ class Client:
 
             logger.info(f'{self.session_id} - started subscribing')
             start_time = datetime.datetime.now()
-            await self._subscribe_channels()
+            await self.subscribe_channels()
             logger.info(f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
 
             print('старт')
@@ -104,42 +104,10 @@ class Client:
 
     async def subscribe_channels(self):
         me = await db.get_client(self.session_id)
-        print(me)
-        channels = await db.get_channels()
-        channels_usernames = [channel.username for channel in channels]
-        for username in self.listening_channels:
-            entity = None
-            if username not in channels_usernames:
-
-                print(username)
-                if isinstance(username, int):
-                    continue
-                await self.client(functions.messages.ImportChatInviteRequest())
-                entity = await self.client.get_entity(username)
-                channel = await db.insert_channel(entity.id, entity.username)
-                channels_usernames.append(channel.username)
-                print(channel)
-            else:
-                channel = await db.get_channel(username)
-
-            joined_clients = await db.get_joined_clients(channel)
-            if not joined_clients:
-                joined_clients = []
-            if me.id not in joined_clients:
-                if channel:
-                    if entity is None:
-                        entity = await self.client.get_entity(username)
-                    await self.client(functions.channels.JoinChannelRequest(entity))
-                    await db.add_join(me, channel)
-                    sleep_time = random.randint(5 * 60, 10 * 60)
-                    print(f'{me} joins {username}. Sleep for {sleep_time}...')
-                    await asyncio.sleep(sleep_time)
-
-    async def _subscribe_channels(self):
-        me = await db.get_client(self.session_id)
         for i, obj in enumerate(self.listening_channels):
             try:
                 if obj.startswith('+'):
+                    # invite_link given
                     invite_link = obj[1:]
                     try:
                         entity = await self.client.get_entity(
@@ -154,30 +122,33 @@ class Client:
                                 channel = await db.insert_channel(entity.id, entity.username)
                             await db.add_join(me, channel)
 
-                            sleep_time = random.randint(5 * 60, 10 * 60)
-                            print(f'{me} joins {entity.id}. Sleep for {sleep_time}...')
-                            await asyncio.sleep(sleep_time)
+                            await self.sleep(me, entity.id)
                         else:  # Not exists
                             logger.error(traceback.format_exc())
                             continue
                     print(entity)
                     self.listening_channels[i] = entity.id
                 else:
+                    # username given
                     joined_channels = await db.get_joined_channels(me)
                     channel: TgChannel = await db.get_channel(obj)
                     if channel is not None:
                         if channel.id not in [i.channel_id for i in joined_channels]:
                             # канал есть в бд, но юзер не подписан
                             entity = await self.client.get_entity(obj)
+                            chat_id = entity.id
+
                             await self.client(functions.channels.JoinChannelRequest(entity))
                             await db.add_join(me, channel)
 
-                            sleep_time = random.randint(5 * 60, 10 * 60)
-                            print(f'{me} joins {entity.id}. Sleep for {sleep_time}...')
-                            await asyncio.sleep(sleep_time)
+                            await self.sleep(me, entity.id)
+                        else:
+                            # канал есть, и юзер подписан
+                            chat_id = channel.chat_id
                     else:
                         # канала нет в бд, нужно добавить
                         entity = await self.client.get_entity(obj)
+                        chat_id = entity.id
                         if not isinstance(entity, types.Channel):
                             logger.error('Wrong username of channel')
                             continue
@@ -186,11 +157,17 @@ class Client:
                         await self.client(functions.channels.JoinChannelRequest(entity))
                         await db.add_join(me, channel)
 
-                        sleep_time = random.randint(5 * 60, 10 * 60)
-                        print(f'{me} joins {entity.id}. Sleep for {sleep_time}...')
-                        await asyncio.sleep(sleep_time)
+                        await self.sleep(me, entity.id)
+
+                    # смотрим по chat_id
+                    self.listening_channels[i] = chat_id
             except Exception as ex:
                 logger.error(ex)
+
+    async def sleep(self, me, entity_id):
+        sleep_time = random.randint(2 * 60, 3 * 60)
+        logger.info(f'{me} joins {entity_id}. Sleep for {sleep_time}...')
+        await asyncio.sleep(sleep_time)
 
     async def test_client(self):
         print('test', await self.client.get_me())
@@ -200,9 +177,9 @@ class Client:
         return await db.get_joined_channels(me)
 
     async def update_db_data(self, fname: str = None, lname: str = None, sex: str = None, photo_path: str = None,
-                             about: str = None):
+                             about: str = None, role: str = None):
         await db.update_data(self.session_id, first_name=fname, last_name=lname, sex=sex, photo_path=photo_path,
-                             about=about)
+                             about=about, role=role)
 
     async def _update_photo(self, path: str):
         photo = await self.client.upload_file(path)
@@ -234,10 +211,35 @@ class Client:
             names = f.read().split('\n')
             lname = random.choice(names)
 
+        mroles = [f'''Ты -  {fname}  из Татарстана (парень), активный участник городских чатов. Ты разбираешься в еде, твой доход средний. у тебя есть муж и ты его сильно любишь.  Твой стиль сообщений -    используешь слэнг (отстой, норм, и т.п.), общаешься в разговорном  стиле, как взрослый человек 35 лет. без обращений.  Твоя задача давать комментарии к сообщениям  user. 
+Ты патриот, но не всегда любишь местную власть. 
+Ты полностью следуешь стилю, пунктуаций, тону, манере речи персонажа {fname}.  Ты пишешь используя, ограничен от 70 до 120 слов в тексте. Всегда пишешь с маленькой буквой. 
+Знаешь толко русский язык. 
+Никогда не пиши (братан, кореш, чувак, и т.п.) 
+Никогда не выходишь из роли.''',
+                  f'''Ты -  {fname} (парень), активный участник городских чатов. Ты разбираешься в еде, в машинах, рыбалке, твой доход средний. у тебя есть муж и ты его сильно любишь.  Твой стиль сообщений -    используешь слэнг (отстой, норм, и т.п.), общаешься в разговорном  стиле, как взрослый человек 35 лет.  Твоя задача давать комментарии к сообщениям  user. 
+Ты патриот, но не всегда любишь местную власть. 
+Ты полностью следуешь стилю, пунктуаций, тону, манере речи персонажа {fname}.  Ты пишешь без смайлов, ограничен от 70 до 120 слов в тексте. Всегда пишешь с маленькой буквой. 
+Знаешь толко русский язык. 
+Никогда не пиши братан, кореш, чувак, и т.п. 
+Никогда не выходишь из роли.''']
+        froles = [f'''Ты -  {fname} (девушка), активный участник городских чатов. Ты разбираешься в еде, в женских штучках , твой доход средний. у тебя есть муж и ты его сильно любишь.  Твой стиль сообщений -   не используешь слэнг (отстой, норм, и т.п.), общаешься в неформальном стиле, как взрослый человек 45 лет.  Твоя задача давать комментарии к сообщениям  user. 
+Ты патриот, но не всегда любишь местную власть. 
+Ты полностью следуешь стилю, пунктуаций, тону, манере речи персонажа {fname}.  Ты пишешь без смайлов, ограничен от 70 до 120 слов в тексте. Всегда пишешь с маленькой буквой. 
+Знаешь толко русский язык. 
+Никогда не пиши братан, кореш, чувак, и т.п. 
+Никогда не выходишь из роли.''']
+
+        if sex == '0':
+            role = random.choice(mroles)
+        elif sex == '1':
+            role = random.choice(froles)
+        else:
+            role = ''
         photo_names = os.listdir(f'data/images/{sex}')
         photo_path = f'{sex}/' + random.choice(photo_names)
         await self.update_profile(fname, lname, photo_path)
-        await self.update_db_data(fname, lname, sex, photo_path)
+        await self.update_db_data(fname, lname, sex, photo_path, role)
         return {'first_name': fname, 'last_name': lname, 'photo_path': photo_path, 'sex': sex}
 
     async def set_profile(self):
@@ -281,21 +283,20 @@ class Client:
 
     async def message_handler(self, event: events.NewMessage.Event):
         chat = event.chat
-
         client: TelegramClient = self.client
-        # print(chat)
+
         if chat.id in self.listening_channels or chat.username in self.listening_channels:
             try:
-                # if not random.randint(0, 1):
-                #     print('not send')
-                #     logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
-                #     return
+                if not random.randint(0, 1):
+                    print('not send')
+                    logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
+                    return
 
                 logger.info(f'new message in {chat.username or chat.id}')
 
                 await client(
                     functions.messages.GetMessagesViewsRequest(peer=chat, id=[event.message.id], increment=True))
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
                 res = await client(functions.messages.SendReactionRequest(
                     peer=chat,
                     msg_id=event.message.id,
@@ -309,8 +310,8 @@ class Client:
 
                 sleep_time = random.randint(30, 5 * 60)
                 print(sleep_time)
-                # logger.info(f'sleep for {sleep_time}')
-                # await asyncio.sleep(sleep_time)
+                logger.info(f'sleep for {sleep_time}')
+                await asyncio.sleep(sleep_time)
 
                 text = await gpt.get_comment(event.message.message, role=me.role)
                 print(text)
