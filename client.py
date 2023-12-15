@@ -22,7 +22,6 @@ class Client:
         self.session_id = session_id
         self.proxy_id = proxy_id
         self.listening_channels = listening_channels
-
         self.init_session()
 
     def init_session(self):
@@ -33,7 +32,7 @@ class Client:
         session_path = f'sessions/{self.session_id}/{self.session_id}'
 
         proxy = Proxy(self.proxy_id)
-
+        logger.info('before init session')
         client = TelegramClient(session_path, app_id, app_hash,
                                 proxy=proxy.dict,
                                 device_model="iPhone 13 Pro Max",
@@ -42,10 +41,12 @@ class Client:
                                 lang_code="en",
                                 system_lang_code="en-US"
                                 )
+        logger.info('after init session')
         self.client = client
 
     async def start(self):
         try:
+            logger.info('before connect')
             await self.client.connect()
             logger.info('connect')
             if await self.client.is_user_authorized():
