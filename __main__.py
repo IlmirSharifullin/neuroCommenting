@@ -15,7 +15,7 @@ from proxies.proxy import Proxy
 
 async def delay(coro, seconds):
     await asyncio.sleep(seconds)
-    return await coro
+    await coro
 
 
 async def connect_sessions(*sessions):
