@@ -45,7 +45,6 @@ class Client:
     async def start(self):
         try:
             await self.client.connect()
-            # logger.info('connect')
             if await self.client.is_user_authorized():
                 await self.client.start()
                 return True
@@ -54,8 +53,9 @@ class Client:
         return False
 
     async def run(self):
-
-        if await self.start():
+        f = await self.start()
+        logger.info(f)
+        if f:
             await self.main()
         else:
             shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
