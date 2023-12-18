@@ -75,7 +75,7 @@ class Client:
                 me = await db.get_client(self.session_id)
             await asyncio.sleep(5)
 
-            # await self.set_random_data()
+            await self.set_random_data()
 
             # logger.info(f'{self.session_id} - started subscribing')
             start_time = datetime.datetime.now()
@@ -101,26 +101,24 @@ class Client:
             try:
                 if obj.startswith('+'):
                     # invite_link given
-                    invite_link = obj[1:]
-                    try:
-                        entity = await self.client.get_input_entity(
-                            'https://t.me/joinchat/' + invite_link)  # exists and joined
-                        new_listening_channels[i] = entity.channel_id
-                    except Exception as ex:
-                        if 'you are not part of' in str(ex):  # Exists but not joined
-                            res1 = await self.client(functions.messages.ImportChatInviteRequest(invite_link))
-                            entity = res1.chats[0]
+                    invite_hash = obj[1:]
+                    chat_invite = await self.client(functions.messages.CheckChatInviteRequest(invite_hash))
+                    if isinstance(chat_invite, types.ChatInviteAlready):
+                        # already joined
+                        chat_id = chat_invite.chat.id
+                    else:
+                        # not joined
+                        updates = await self.client(functions.messages.ImportChatInviteRequest(invite_hash))
+                        entity = updates.chats[0]
+                        chat_id = entity.id
 
-                            channel: TgChannel = await db.get_channel(entity.id)
-                            if channel is None:
-                                channel = await db.insert_channel(entity.id, entity.username)
-                            await db.add_join(me, channel)
+                        channel: TgChannel = await db.get_channel(chat_id)
+                        if channel is None:
+                            channel = await db.insert_channel(chat_id, entity.username)
+                        await db.add_join(me, channel)
 
-                            await self.sleep(me, entity.id)
-                        else:  # Not exists
-                            logger.error(traceback.format_exc())
-                            continue
-                        new_listening_channels[i] = entity.id
+                        await self.sleep(me, entity.id)
+                    new_listening_channels[i] = chat_id
                 else:
                     # username given
                     joined_channels = await db.get_joined_channels(me)
