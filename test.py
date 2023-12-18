@@ -75,35 +75,37 @@ async def connect_sessions(*sessions):
 
 
 async def main():
-    os.getcwd()
-    session_ids = os.listdir(os.getcwd() + '/sessions')
-    print(session_ids)
-    for proxy_id, session_id in enumerate(session_ids):
-        proxy_id = proxy_id % 12
-        print(session_id)
-        from_db = await db.get_client(session_id)
-        print(from_db)
-        if from_db and from_db.status == db.ClientStatusEnum.USING.value:
-            print('using')
-            continue
-        try:
-            myCli = Client(session_id, proxy_id, [])
-            async with myCli.client:
-                try:
-                    await asyncio.sleep(1)
-                    me = await myCli.client.get_me()
-                except Exception as ex:
-                    print(ex)
-                    await db.set_status(session_id, db.ClientStatusEnum.BANNED)
-                    shutil.move(f'sessions/{session_id}', 'sessions_banned/')
-                    print('banned')
-                else:
-                    await db.set_status(session_id, db.ClientStatusEnum.FREE)
-                    await myCli.set_random_data()
-                    print('new')
-                await asyncio.sleep(2)
-        except Exception as ex:
-            print(traceback.format_exc())
-            continue
+    # os.getcwd()
+    # session_ids = os.listdir(os.getcwd() + '/sessions')
+    # print(session_ids)
+    # for proxy_id, session_id in enumerate(session_ids):
+    #     proxy_id = proxy_id % 12
+    #     print(session_id)
+    #     from_db = await db.get_client(session_id)
+    #     print(from_db)
+    #     if from_db and from_db.status == db.ClientStatusEnum.USING.value:
+    #         print('using')
+    #         continue
+    #     try:
+    #         myCli = Client(session_id, proxy_id, [])
+    #         async with myCli.client:
+    #             try:
+    #                 await asyncio.sleep(1)
+    #                 me = await myCli.client.get_me()
+    #             except Exception as ex:
+    #                 print(ex)
+    #                 await db.set_status(session_id, db.ClientStatusEnum.BANNED)
+    #                 shutil.move(f'sessions/{session_id}', 'sessions_banned/')
+    #                 print('banned')
+    #             else:
+    #                 await db.set_status(session_id, db.ClientStatusEnum.FREE)
+    #                 await myCli.set_random_data()
+    #                 print('new')
+    #             await asyncio.sleep(2)
+    #     except Exception as ex:
+    #         print(traceback.format_exc())
+    #         continue
+    pass
 
-asyncio.run(main())
+
+# asyncio.run(main())
