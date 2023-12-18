@@ -64,7 +64,7 @@ class Client:
     async def main(self):
         try:
             await self.test_client()
-            logger.info(f'after test - {self.session_id}')
+            # logger.info(f'after test - {self.session_id}')
             await db.set_status(self.session_id, db.ClientStatusEnum.USING)
             await asyncio.sleep(5)
             me = await db.get_client(self.session_id)
@@ -75,7 +75,7 @@ class Client:
 
             # await self.set_random_data()
 
-            logger.info(f'{self.session_id} - started subscribing')
+            # logger.info(f'{self.session_id} - started subscribing')
             start_time = datetime.datetime.now()
             await self.subscribe_channels()
             logger.info(f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}\nstart\nlisten: {self.listening_channels}')
