@@ -35,7 +35,7 @@ class CustomLogger(logging.Logger):
 
 
 def setup_logger():
-    logging.basicConfig(level=int(os.getenv("LOG_LEVEL", 10)), format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=int(os.getenv("LOG_LEVEL", 10)), format='%(asctime)s - %(levelname)s - %(name)s- %(message)s')
 
     return CustomLogger(__name__)
 
