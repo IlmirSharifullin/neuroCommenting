@@ -162,7 +162,7 @@ class Client:
         await asyncio.sleep(sleep_time)
 
     async def test_client(self):
-        print('test', await self.client.get_me())
+        await self.client.get_me()
 
     async def get_joined_channels(self):
         me = await db.get_client(self.session_id)
