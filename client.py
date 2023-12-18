@@ -320,7 +320,7 @@ not a 1v1 dialog.
         client: TelegramClient = self.client
         if chat.id in self.listening_channels or chat.username in self.listening_channels:
             try:
-                if not random.randint(0, 1):
+                if not random.randint(0, 2):
                     print('not send')
                     logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
                     return
