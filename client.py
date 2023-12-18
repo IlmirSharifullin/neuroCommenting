@@ -277,12 +277,11 @@ class Client:
         chat = event.chat
         client: TelegramClient = self.client
         if chat.id in self.listening_channels or chat.username in self.listening_channels:
-            print(chat.username or chat.id)
             try:
-                # if not random.randint(0, 1):
-                #     print('not send')
-                #     logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
-                #     return
+                if not random.randint(0, 1):
+                    print('not send')
+                    logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
+                    return
 
                 logger.info(f'new message in {chat.username or chat.id}')
 
@@ -301,12 +300,9 @@ class Client:
                 me: TgClient = await db.get_client(self.session_id)
 
                 sleep_time = random.randint(30, 5 * 60)
-                print(sleep_time)
-                # logger.info(f'sleep for {sleep_time}')
-                # await asyncio.sleep(sleep_time)
-                print(me)
+                logger.info(f'sleep for {sleep_time}')
+                await asyncio.sleep(sleep_time)
                 text = await gpt.get_comment(event.message.message, role=me.role)
-                print(text)
                 await asyncio.sleep(10)
                 await client.send_message(chat, text, comment_to=event.message.id)
             except Exception as ex:
