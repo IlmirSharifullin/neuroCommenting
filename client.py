@@ -46,6 +46,7 @@ class Client:
     async def start(self):
         try:
             await self.client.connect()
+            logger.info('connected')
             if await self.client.is_user_authorized():
                 await self.client.start()
                 return True
