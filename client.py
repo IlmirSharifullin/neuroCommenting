@@ -75,7 +75,7 @@ class Client:
                 me = await db.get_client(self.session_id)
             await asyncio.sleep(5)
 
-            await self.set_random_data()
+            # await self.set_random_data()
 
             # logger.info(f'{self.session_id} - started subscribing')
             start_time = datetime.datetime.now()
