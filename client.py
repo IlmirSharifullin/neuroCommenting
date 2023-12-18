@@ -32,7 +32,6 @@ class Client:
         session_path = f'sessions/{self.session_id}/{self.session_id}'
 
         proxy = Proxy(self.proxy_id)
-        logger.info(f'before init session: {self.session_id}')
         client = TelegramClient(session_path, app_id, app_hash,
                                 proxy=proxy.dict,
                                 device_model="iPhone 13 Pro Max",
@@ -41,14 +40,12 @@ class Client:
                                 lang_code="en",
                                 system_lang_code="en-US"
                                 )
-        logger.info('after init session')
         self.client = client
 
     async def start(self):
         try:
-            logger.info('before connect')
             await self.client.connect()
-            logger.info('connect')
+            # logger.info('connect')
             if await self.client.is_user_authorized():
                 await self.client.start()
                 return True
@@ -59,7 +56,6 @@ class Client:
     async def run(self):
 
         if await self.start():
-            logger.info('before main')
             await self.main()
         else:
             shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
@@ -68,11 +64,9 @@ class Client:
 
     async def main(self):
         try:
-            log_to_channel(await db.get_client(self.session_id))
             await self.test_client()
             await db.set_status(self.session_id, db.ClientStatusEnum.USING)
             await asyncio.sleep(5)
-            logger.info(f"running {self.session_id}")
             me = await db.get_client(self.session_id)
             if me is None:
                 await db.insert_client(self.session_id)
@@ -81,14 +75,11 @@ class Client:
 
             # await self.set_random_data()
 
-            logger.info(f'{self.session_id} - started subscribing')
+            # logger.info(f'{self.session_id} - started subscribing')
             start_time = datetime.datetime.now()
             await self.subscribe_channels()
-            logger.info(f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}')
-
+            logger.info(f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}\nstart')
             print('старт')
-            logger.info(f'start {self.session_id}')
-
             needs = True
             if needs:
                 self.client.add_event_handler(self.message_handler, events.NewMessage())
@@ -100,19 +91,19 @@ class Client:
             await self.replace_session()
         except Exception as ex:
             logger.error(traceback.format_exc())
-            print(traceback.format_exc())
 
     async def subscribe_channels(self):
         me = await db.get_client(self.session_id)
+        new_listening_channels = [0] * len(self.listening_channels)
         for i, obj in enumerate(self.listening_channels):
-            print(obj)
             try:
                 if obj.startswith('+'):
                     # invite_link given
                     invite_link = obj[1:]
                     try:
-                        entity = await self.client.get_entity(
+                        entity = await self.client.get_input_entity(
                             'https://t.me/joinchat/' + invite_link)  # exists and joined
+                        new_listening_channels[i] = entity.channel_id
                     except Exception as ex:
                         if 'you are not part of' in str(ex):  # Exists but not joined
                             res1 = await self.client(functions.messages.ImportChatInviteRequest(invite_link))
@@ -127,15 +118,13 @@ class Client:
                         else:  # Not exists
                             logger.error(traceback.format_exc())
                             continue
-
-                    self.listening_channels[i] = entity.id
+                        new_listening_channels[i] = entity.id
                 else:
                     # username given
                     joined_channels = await db.get_joined_channels(me)
-                    print(joined_channels)
                     channel: TgChannel = await db.get_channel(obj)
                     if channel is not None:
-                        if channel.id not in [i.channel_id for i in joined_channels]:
+                        if channel.id not in joined_channels:
                             # канал есть в бд, но юзер не подписан
                             entity = await self.client.get_entity(obj)
                             chat_id = entity.id
@@ -162,9 +151,10 @@ class Client:
                         await self.sleep(me, entity.id)
 
                     # смотрим по chat_id
-                    self.listening_channels[i] = chat_id
+                    new_listening_channels[i] = chat_id
             except Exception as ex:
-                logger.error(ex)
+                logger.error(traceback.format_exc())
+        self.listening_channels = new_listening_channels
 
     async def sleep(self, me, entity_id):
         sleep_time = random.randint(2 * 60, 3 * 60)
@@ -286,13 +276,13 @@ class Client:
     async def message_handler(self, event: events.NewMessage.Event):
         chat = event.chat
         client: TelegramClient = self.client
-
         if chat.id in self.listening_channels or chat.username in self.listening_channels:
+            print(chat.username or chat.id)
             try:
-                if not random.randint(0, 1):
-                    print('not send')
-                    logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
-                    return
+                # if not random.randint(0, 1):
+                #     print('not send')
+                #     logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
+                #     return
 
                 logger.info(f'new message in {chat.username or chat.id}')
 
@@ -312,13 +302,12 @@ class Client:
 
                 sleep_time = random.randint(30, 5 * 60)
                 print(sleep_time)
-                logger.info(f'sleep for {sleep_time}')
-                await asyncio.sleep(sleep_time)
-
+                # logger.info(f'sleep for {sleep_time}')
+                # await asyncio.sleep(sleep_time)
+                print(me)
                 text = await gpt.get_comment(event.message.message, role=me.role)
                 print(text)
                 await asyncio.sleep(10)
                 await client.send_message(chat, text, comment_to=event.message.id)
             except Exception as ex:
                 logger.error(traceback.format_exc())
-                print(traceback.format_exc())

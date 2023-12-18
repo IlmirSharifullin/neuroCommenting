@@ -15,6 +15,7 @@ def log_to_channel(msg, type='info'):
     res = requests.post('https://api.telegram.org/bot6621958158:AAFIALtB_WkdK1YbXZ_dBfkLxzVR6xAjPK0/sendMessage',
                         params={'text': ('ERROR:\n' if type == 'error' else 'INFO:\n') + str(msg),
                                 'chat_id': LOGS_CHANNEL_ID})
+    return res.content
 
 
 engine = create_async_engine(url=DB_URL, echo=False)
@@ -25,12 +26,12 @@ class CustomLogger(logging.Logger):
     def info(self, msg, *args, to_channel=True, **kwargs):
         super().info(msg, *args, **kwargs)
         if to_channel:
-            log_to_channel(msg, 'info')
+            res = log_to_channel(msg, 'info')
 
     def error(self, msg, *args, to_channel=True, **kwargs):
         super().error(msg, *args, **kwargs)
         if to_channel:
-            log_to_channel(msg, 'error')
+            res = log_to_channel(msg, 'error')
 
 
 def setup_logger():

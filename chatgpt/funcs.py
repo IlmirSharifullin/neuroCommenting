@@ -13,7 +13,7 @@ WORKING_TIME = 20
 async def get_comment(post: str, role: str):
     # start_time = datetime.datetime.now()
     completion = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-3.5-turbo-1106",
         messages=[
             {"role": "system", "content": role},
             {"role": "user", "content": f"""Пост: {post}"""}

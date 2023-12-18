@@ -29,7 +29,6 @@ association_table = Table(
     Base.metadata,
     Column('client_id', Integer, ForeignKey('client.id', ondelete='CASCADE')),
     Column('channel_id', Integer, ForeignKey('channel.id', ondelete='CASCADE')),
-    Column('is_tracking', Boolean, default=False),
     UniqueConstraint('client_id', 'channel_id', name='uq_client_channel')
 
 )

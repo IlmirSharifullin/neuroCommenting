@@ -42,15 +42,15 @@ async def connect_sessions(*sessions):
 
 
 async def main():
-    channels = ['+EmHan_WSvDdmNDky', '+PG9C65bK6_k3MDI6', '+ie1wo23VFH4xZmYy', 'aznakaevo', '+XsUt7iTl7w8zNTMy', 'bugulma', '+HL12JzSXTAozMjJi']
+    channels = ['+EmHan_WSvDdmNDky', '+PG9C65bK6_k3MDI6', '+ie1wo23VFH4xZmYy', 'aznakaevo', '+3ZEMGMfYaRs5M2Ji', 'bugulma', '+NpWaJ_fvj5c1NTdi']
     sessions = ['12098898404', '12098898436', '12098898668', '12102692058', '12102738279', '12105738318', '12107103112', '12107103242', '12107103256', '12133785331', '12109565013', '12132348393']
-    # for i in range(len(sessions)):
-    #     proxy_id = i % Proxy.proxy_count
-    #     sessions[i] = (sessions[i], proxy_id, [channels[0], channels[i//2 + 1]])
-    sessions = sessions[0:2]
     for i in range(len(sessions)):
         proxy_id = i % Proxy.proxy_count
-        sessions[i] = (sessions[i], proxy_id, channels)
+        sessions[i] = (sessions[i], proxy_id, [channels[0], channels[i//2 + 1]])
+    # sessions = sessions[2:4]
+    # for i in range(len(sessions)):
+    #     proxy_id = i % Proxy.proxy_count
+    #     sessions[i] = (sessions[i], proxy_id, channels)
 
     logger.info('test db ' + str(await db.get_client('12098898404')))
 

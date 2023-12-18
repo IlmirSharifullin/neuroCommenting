@@ -34,7 +34,7 @@ async def get_channels(session: AsyncSession) -> List[TgChannel]:
 
 
 @with_session
-async def get_channel(data: str|int, session: AsyncSession):
+async def get_channel(data: str | int, session: AsyncSession):
     if isinstance(data, int):
         query = await session.execute(select(TgChannel).where(TgChannel.chat_id == data))
     else:
@@ -53,16 +53,14 @@ async def insert_channel(chat_id: int, username: str, session: AsyncSession) -> 
     try:
         channel = await session.execute(
             insert(TgChannel).values(chat_id=chat_id, username=username).returning(TgChannel))
-        await session.commit()
         return channel.scalar()
     except Exception as ex:
-        print(ex)
-        return None
+        channel = await get_channel(chat_id)
+        return channel
 
 
 @with_session
-async def insert_client(session_id: str, session: AsyncSession, status=ClientStatusEnum.USING.value) -> Optional[
-    TgClient]:
+async def insert_client(session_id: str, session: AsyncSession, status=ClientStatusEnum.USING.value) -> Optional[TgClient]:
     try:
         client = await session.execute(
             insert(TgClient).values(session_id=session_id, status=status).returning(TgClient))
@@ -96,7 +94,8 @@ async def get_joined_clients(channel: TgChannel, session: AsyncSession):
 @with_session
 async def get_joined_channels(client: TgClient, session: AsyncSession):
     query = await session.execute(select(association_table).filter_by(client_id=client.id))
-    return list(query.scalars())
+    table = [i[1] for i in list(query.fetchall())]
+    return table
 
 
 @with_session
