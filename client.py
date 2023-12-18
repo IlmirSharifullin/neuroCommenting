@@ -75,7 +75,7 @@ class Client:
 
             # await self.set_random_data()
 
-            # logger.info(f'{self.session_id} - started subscribing')
+            logger.info(f'{self.session_id} - started subscribing')
             start_time = datetime.datetime.now()
             await self.subscribe_channels()
             logger.info(f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}\nstart')
