@@ -4,6 +4,7 @@ import json
 import os
 import random
 import shutil
+import time
 import traceback
 from typing import List
 
@@ -53,6 +54,7 @@ class Client:
         return False
 
     async def run(self):
+        time.sleep(random.randint(5, 10))
         f = await self.start()
         if f:
             await self.main()

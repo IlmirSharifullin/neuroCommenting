@@ -14,7 +14,7 @@ from proxies.proxy import Proxy
 
 
 async def delay(coro, seconds):
-    time.sleep(seconds)
+    # time.sleep(seconds)
     await coro
 
 
