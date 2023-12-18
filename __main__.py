@@ -35,7 +35,7 @@ async def connect_sessions(*sessions):
 
         tasks.append(
             asyncio.create_task(
-                delay(cli.run(), random.randint(5, 10))
+                delay(cli.run(), proxy_index * random.randint(5, 10))
             )
         )
         await asyncio.sleep(5)
