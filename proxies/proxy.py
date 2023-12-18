@@ -13,7 +13,7 @@ class Proxy:
         self.username, self.password = user_pass.split(':')
         self.address, self.port = address_port_region.split(':')
         self.dict = {
-            'proxy_type': python_socks.ProxyType.HTTP,
+            'proxy_type': python_socks.ProxyType.SOCKS5,
             'addr': self.address,
             'port': self.port,
             'username': self.username,
