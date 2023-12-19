@@ -11,7 +11,7 @@ from typing import List
 from telethon import TelegramClient, events, functions, types, errors
 from telethon.errors import UserDeactivatedBanError
 
-from config import channel_logins, logger, log_to_channel
+from config import logger
 import db.funcs as db
 import chatgpt.funcs as gpt
 from db.models import TgClient, TgChannel
@@ -162,7 +162,7 @@ class Client:
         await asyncio.sleep(sleep_time)
 
     async def test_client(self):
-        await self.client.get_me()
+        print(self.session_id, (await self.client.get_me()).username)
 
     async def get_joined_channels(self):
         me = await db.get_client(self.session_id)
@@ -269,8 +269,9 @@ not a 1v1 dialog.
 ''']
 
         role = random.choice(roles)
-        photo_names = os.listdir(f'data/images/{sex}')
-        photo_path = f'{sex}/' + random.choice(photo_names)
+        fname = 'Soap'
+        lname = 'McTansh'
+        photo_path = f'{sex}/' + '_648449537cd47.jpg'
         await self.update_profile(fname, lname, photo_path)
         await self.update_db_data(fname=fname, lname=lname, sex=sex, photo_path=photo_path, role=role)
         return {'first_name': fname, 'last_name': lname, 'photo_path': photo_path, 'sex': sex}
@@ -341,9 +342,9 @@ not a 1v1 dialog.
                 me: TgClient = await db.get_client(self.session_id)
 
                 sleep_time = random.randint(30, 5 * 60)
-                print(sleep_time)
-                logger.info(f'sleep for {sleep_time}')
-                await asyncio.sleep(sleep_time)
+                # print(sleep_time)
+                # logger.info(f'sleep for {sleep_time}')
+                # await asyncio.sleep(sleep_time)
                 text = await gpt.get_comment(event.message.message, role=me.role)
                 await asyncio.sleep(10)
 

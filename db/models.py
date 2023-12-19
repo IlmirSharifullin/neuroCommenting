@@ -41,7 +41,6 @@ class TgChannel(Base):
     username = Column(String(255), unique=True)
     chat_id = Column(Integer(), unique=True)
     status = Column(Integer(), default=1, nullable=False)
-
     joined_clients = relationship('TgClient', secondary=association_table, back_populates='joined_channels')
 
     def __str__(self):
@@ -54,6 +53,7 @@ class TgClient(Base):
     id = Column(Integer, primary_key=True)
     session_id = Column(String(255), unique=True)
     status = Column(Integer(), default=1, nullable=False)
+    username = Column(String(255), nullable=True)
     first_name = Column(String(255))
     last_name = Column(String(255))
     about = Column(String())

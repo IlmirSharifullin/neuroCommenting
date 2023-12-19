@@ -6,7 +6,7 @@ import time
 import traceback
 
 import telethon.errors
-from telethon import TelegramClient, functions
+from telethon import TelegramClient, functions, types
 from telethon.errors import UserDeactivatedBanError, UserAlreadyParticipantError
 from telethon.tl.functions.messages import CheckChatInviteRequest
 
@@ -105,7 +105,18 @@ async def main():
     #     except Exception as ex:
     #         print(traceback.format_exc())
     #         continue
-    pass
-
-
-# asyncio.run(main())
+    cli = Client('12133989109', 0, ['+EmHan_WSvDdmNDky', '+PG9C65bK6_k3MDI6'])
+    await cli.start()
+    for link in cli.listening_channels:
+        invite_hash = link[1:]
+        chatInvite = await cli.client(functions.messages.CheckChatInviteRequest(invite_hash))
+        if isinstance(chatInvite, types.ChatInviteAlready):
+            print('already')
+            chat_id = chatInvite.chat.id
+        else:
+            # еще не подписан
+            updates = await cli.client(functions.messages.ImportChatInviteRequest(invite_hash))
+            entity = updates.chats[0]
+            chat_id = entity.id
+        print(chat_id)
+asyncio.run(main())

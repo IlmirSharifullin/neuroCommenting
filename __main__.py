@@ -45,17 +45,24 @@ async def connect_sessions(*sessions):
 async def main():
     channels = ['+EmHan_WSvDdmNDky', '+PG9C65bK6_k3MDI6', '+ie1wo23VFH4xZmYy', 'aznakaevo', '+3ZEMGMfYaRs5M2Ji', 'bugulma', '+PPCMyxgyF5IwMTI6']
     sessions = ['12098898404', '12098898436', '12098898668', '12102692058', '12102738279', '12105738318', '12107103112', '12107103242', '12107103256', '12133785331', '12109565013', '12132348393']
+
     for i in range(len(sessions)):
         proxy_id = i % Proxy.proxy_count
-        sessions[i] = (sessions[i], proxy_id, [channels[0], channels[i//2 + 1]])
-    # sessions = sessions[:6]
+        sessions[i] = (sessions[i], proxy_id, [channels[0], channels[i // 2 + 1]])
+    # sessions = sessions[1:2]
     # for i in range(len(sessions)):
     #     proxy_id = i % Proxy.proxy_count
     #     sessions[i] = (sessions[i], proxy_id, [channels[0], channels[i + 1]])
 
-    logger.info('test db ' + str(await db.get_client('12098898404')))
+    channels1 = ['BybitRussian_News', 'slezisatoshi', 'prometheus', 'roflpuls', 'v_utushkin', 'don_invest', 'swoptoky_games', 'BogdanGdeX', 'dinar_banana', 'binance_ru', 'SCryptOTC']
+    sessions1 = [['12133989109', 12, []], ['12134698369', 13, []], ['13527688414', 14, []]]
 
-    tasks = await connect_sessions(*sessions)
+    for i in range(len(channels1)):
+        sessions1[i % len(sessions1)][2].append(channels1[i])
+
+    logger.info('test db ' + str(await db.get_client('12098898404')))
+    print(sessions + sessions1)
+    tasks = await connect_sessions(*(sessions1 + sessions))
     await asyncio.wait(tasks)
 
 

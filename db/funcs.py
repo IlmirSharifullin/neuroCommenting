@@ -1,4 +1,3 @@
-import asyncio
 import traceback
 
 from sqlalchemy import select, update
