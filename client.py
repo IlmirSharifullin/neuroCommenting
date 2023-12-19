@@ -75,6 +75,8 @@ class Client:
                 me = await db.get_client(self.session_id)
             await asyncio.sleep(5)
 
+            await self.update_profile(about='@shiba')
+
             # await self.set_random_data()
 
             # logger.info(f'{self.session_id} - started subscribing')
@@ -271,7 +273,9 @@ not a 1v1 dialog.
         role = random.choice(roles)
         fname = 'Soap'
         lname = 'McTansh'
-        photo_path = f'{sex}/' + '_648449537cd47.jpg'
+        sex = '0'
+        photo_path = f'0/' + '_648449537cd47.jpg'
+
         await self.update_profile(fname, lname, photo_path)
         await self.update_db_data(fname=fname, lname=lname, sex=sex, photo_path=photo_path, role=role)
         return {'first_name': fname, 'last_name': lname, 'photo_path': photo_path, 'sex': sex}
@@ -342,9 +346,9 @@ not a 1v1 dialog.
                 me: TgClient = await db.get_client(self.session_id)
 
                 sleep_time = random.randint(30, 5 * 60)
-                # print(sleep_time)
-                # logger.info(f'sleep for {sleep_time}')
-                # await asyncio.sleep(sleep_time)
+                print(sleep_time)
+                logger.info(f'sleep for {sleep_time}')
+                await asyncio.sleep(sleep_time)
                 text = await gpt.get_comment(event.message.message, role=me.role)
                 await asyncio.sleep(10)
 

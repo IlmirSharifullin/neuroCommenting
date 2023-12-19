@@ -54,7 +54,7 @@ async def main():
     #     proxy_id = i % Proxy.proxy_count
     #     sessions[i] = (sessions[i], proxy_id, [channels[0], channels[i + 1]])
 
-    channels1 = ['BybitRussian_News', 'slezisatoshi', 'prometheus', 'roflpuls', 'v_utushkin', 'don_invest', 'swoptoky_games', 'BogdanGdeX', 'dinar_banana', 'binance_ru', 'SCryptOTC']
+    channels1 = ['BybitRussian_News', 'slezisatoshi', 'prometheus', 'roflpuls', 'v_utushkin', 'don_invest', 'swoptoky_games', 'BogdanGdeX', 'dinar_banana', 'binance_ru']
     sessions1 = [['12133989109', 12, []], ['12134698369', 13, []], ['13527688414', 14, []]]
 
     for i in range(len(channels1)):
