@@ -319,7 +319,7 @@ not a 1v1 dialog.
         client: TelegramClient = self.client
         if chat.id in self.listening_channels or chat.username in self.listening_channels:
             try:
-                if not random.randint(0, 2):
+                if not random.randint(0, 2) or len(event.message.message) < 50:
                     print('not send')
                     logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
                     return
@@ -356,5 +356,6 @@ not a 1v1 dialog.
                     except errors.InviteRequestSentError:
                         print('Заявка на добавление отправлена')
                         logger.error(traceback.format_exc())
+                    await client.send_message(chat, text, comment_to=event.message.id)
             except Exception as ex:
                 logger.error(traceback.format_exc())
