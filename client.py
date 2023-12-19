@@ -8,7 +8,7 @@ import time
 import traceback
 from typing import List
 
-from telethon import TelegramClient, events, functions, types
+from telethon import TelegramClient, events, functions, types, errors
 from telethon.errors import UserDeactivatedBanError
 
 from config import channel_logins, logger, log_to_channel
@@ -346,6 +346,15 @@ not a 1v1 dialog.
                 await asyncio.sleep(sleep_time)
                 text = await gpt.get_comment(event.message.message, role=me.role)
                 await asyncio.sleep(10)
-                await client.send_message(chat, text, comment_to=event.message.id)
+
+                try:
+                    await client.send_message(chat, text, comment_to=event.message.id)
+                except errors.ChatGuestSendForbiddenError:
+                    channel = await client(functions.channels.GetFullChannelRequest(chat))
+                    try:
+                        await client(functions.channels.JoinChannelRequest(channel.full_chat.linked_chat_id))
+                    except errors.InviteRequestSentError:
+                        print('Заявка на добавление отправлена')
+                        logger.error(traceback.format_exc())
             except Exception as ex:
                 logger.error(traceback.format_exc())
