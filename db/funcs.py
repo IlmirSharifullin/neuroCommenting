@@ -1,5 +1,6 @@
 import traceback
 
+import asyncio
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -45,6 +46,13 @@ async def get_channel(data: str | int, session: AsyncSession):
 async def get_client(session_id: str, session: AsyncSession) -> TgClient:
     query = await session.execute(select(TgClient).where(TgClient.session_id == session_id))
     return query.scalar()
+
+
+@with_session
+async def get_clients(session: AsyncSession) -> List[TgClient]:
+    query = await session.execute(select(TgClient).where(TgClient.status != ClientStatusEnum.BANNED.value))
+    channels = list(query.scalars())
+    return channels
 
 
 @with_session
@@ -105,8 +113,7 @@ async def add_join(client: TgClient, channel: TgChannel, session: AsyncSession):
 
 @with_session
 async def update_data(session_id: str, session: AsyncSession, first_name: str = None, last_name: str = None,
-                      sex: int = None, photo_path: str = None, about: str = None, role: str = None):
-    print('update db')
+                      sex: int = None, photo_path: str = None, about: str = None, role: str = None, username: str = None, min_answer_time: int = None, max_answer_time: int = None):
     client: TgClient = await get_client(session_id)
     await session.execute(
         update(TgClient).filter_by(session_id=session_id).values(first_name=first_name or client.first_name,
@@ -114,7 +121,10 @@ async def update_data(session_id: str, session: AsyncSession, first_name: str = 
                                                                  sex=sex or client.sex,
                                                                  photo_path=photo_path or client.photo_path,
                                                                  about=about or client.about,
-                                                                 role=role or client.role))
+                                                                 role=role or client.role,
+                                                                 username=username or client.username,
+                                                                 min_answer_time=min_answer_time or client.min_answer_time,
+                                                                 max_answer_time=max_answer_time or client.max_answer_time))
 
     return await session.commit()
 
@@ -131,6 +141,5 @@ async def get_random_free_session(session: AsyncSession):
 
 @with_session
 async def test(session: AsyncSession):
-    query = await session.execute(select(TgClient))
-    clients = list(query.scalars())[0]
-    return clients
+    print(await get_clients())
+

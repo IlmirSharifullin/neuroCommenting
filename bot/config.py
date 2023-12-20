@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+ADMIN_LIST = [901977201]
+
 LOGS_CHANNEL_ID = os.getenv('LOGS_CHANNEL_ID')
 
 BOT_TOKEN = os.getenv('BOT_TOKEN')

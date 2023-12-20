@@ -60,6 +60,9 @@ class TgClient(Base):
     sex = Column(SmallInteger(), default=0)
     photo_path = Column(String(255))
     role = Column(String(), nullable=True)
+    proxy = Column(String(255), nullable=True)
+    min_answer_time = Column(Integer(), default=30)
+    max_answer_time = Column(Integer(), default=300)
     joined_channels = relationship('TgChannel', secondary=association_table, back_populates='joined_clients')
 
     def __str__(self):

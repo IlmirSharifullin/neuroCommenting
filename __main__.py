@@ -44,18 +44,22 @@ async def connect_sessions(*sessions):
 
 async def main():
     channels = ['+EmHan_WSvDdmNDky', '+PG9C65bK6_k3MDI6', '+ie1wo23VFH4xZmYy', 'aznakaevo', '+3ZEMGMfYaRs5M2Ji', 'bugulma', '+PPCMyxgyF5IwMTI6']
-    sessions = ['12098898404', '12098898436', '12098898668', '12102692058', '12102738279', '12105738318', '12107103112', '12107103242', '12107103256', '12133785331', '12109565013', '12132348393']
+    sessions = ['12088371327', '12089645986', '12089997483', '12096217756']
 
     for i in range(len(sessions)):
         proxy_id = i % Proxy.proxy_count
-        sessions[i] = (sessions[i], proxy_id, [channels[0], channels[i // 2 + 1]])
+        sessions[i] = (sessions[i], proxy_id, [channels[0]])
+        if i // 2 == 0:
+            sessions[i][2].extend(channels[1:4])
+        else:
+            sessions[i][2].extend(channels[4:])
     # sessions = sessions[1:2]
     # for i in range(len(sessions)):
     #     proxy_id = i % Proxy.proxy_count
     #     sessions[i] = (sessions[i], proxy_id, [channels[0], channels[i + 1]])
 
     channels1 = ['BybitRussian_News', 'slezisatoshi', 'prometheus', 'roflpuls', 'v_utushkin', 'don_invest', 'swoptoky_games', 'BogdanGdeX', 'dinar_banana', 'binance_ru']
-    sessions1 = [['12133989109', 12, []], ['12134698369', 13, []], ['13527688414', 14, []]]
+    sessions1 = [['12096185207', 12, []], ['12095020282', 13, []], ['12107106097', 14, []]]
 
     for i in range(len(channels1)):
         sessions1[i % len(sessions1)][2].append(channels1[i])

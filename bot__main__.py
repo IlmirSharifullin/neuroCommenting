@@ -39,7 +39,7 @@ async def main():
         logging.error(traceback.format_exc())
         print(traceback.format_exc())
         res = requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
-                      params={'chat_id': LOGS_CHANNEL_ID, 'text': traceback.format_exc()[-2000:]})
+                            params={'chat_id': LOGS_CHANNEL_ID, 'text': traceback.format_exc()[-2000:]})
 
     # Register startup hook to initialize webhook
     dp.startup.register(on_startup)
@@ -68,7 +68,7 @@ async def main():
 if __name__ == "__main__":
     running_sessions = []
 
-    bot = Bot(BOT_TOKEN, parse_mode='markdown')
+    bot = Bot(BOT_TOKEN, parse_mode='')
     app = asyncio.run(main())
 
     web.run_app(app, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT)

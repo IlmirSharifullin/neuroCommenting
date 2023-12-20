@@ -46,13 +46,19 @@ class Client:
     async def start(self):
         try:
             await self.client.connect()
-            logger.info('connected')
+            logger.info(f'{self.session_id} connected')
             if await self.client.is_user_authorized():
                 await self.client.start()
                 return True
         except Exception as ex:
             logger.error(traceback.format_exc())
         return False
+
+    async def disconnect(self):
+        try:
+            await self.client.disconnect()
+        except Exception as ex:
+            logger.error(traceback.format_exc())
 
     async def run(self):
         f = await self.start()
@@ -65,7 +71,7 @@ class Client:
 
     async def main(self):
         try:
-            await self.test_client()
+            cli = await self.test_client()
             # logger.info(f'after test - {self.session_id}')
             await db.set_status(self.session_id, db.ClientStatusEnum.USING)
             await asyncio.sleep(5)
@@ -73,16 +79,16 @@ class Client:
             if me is None:
                 await db.insert_client(self.session_id)
                 me = await db.get_client(self.session_id)
+                await self.set_random_data()
+
+            await db.update_data(self.session_id, username=cli)
             await asyncio.sleep(5)
-
-            await self.update_profile(about='@shiba')
-
-            # await self.set_random_data()
 
             # logger.info(f'{self.session_id} - started subscribing')
             start_time = datetime.datetime.now()
             await self.subscribe_channels()
-            logger.info(f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}\nstart\nlisten: {self.listening_channels}')
+            logger.info(
+                f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}\nstart\nlisten: {self.listening_channels}')
             print('старт')
             needs = True
             if needs:
@@ -164,7 +170,7 @@ class Client:
         await asyncio.sleep(sleep_time)
 
     async def test_client(self):
-        print(self.session_id, (await self.client.get_me()).username)
+        return (await self.client.get_me()).username
 
     async def get_joined_channels(self):
         me = await db.get_client(self.session_id)
@@ -175,7 +181,7 @@ class Client:
         await db.update_data(self.session_id, first_name=fname, last_name=lname, sex=sex, photo_path=photo_path,
                              about=about, role=role)
 
-    async def _update_photo(self, path: str):
+    async def _update_photo_by_path(self, path: str):
         photo = await self.client.upload_file(path)
         photos = await self.client.get_profile_photos('me')
         for i in range(len(photos)):
@@ -192,7 +198,7 @@ class Client:
     async def update_profile(self, fname: str = None, lname: str = None, photo_path: str = None, about: str = None):
         await self.client(functions.account.UpdateProfileRequest(first_name=fname, last_name=lname, about=about))
         if photo_path:
-            await self._update_photo('data/images/' + photo_path)
+            await self._update_photo_by_path('data/images/' + photo_path)
         print('updated')
 
     async def set_random_data(self):
@@ -269,12 +275,20 @@ not a 1v1 dialog.
 Не используй кавычки,  игнорируй emoji в сообщения от меня.  и и ничего не пиши про сообщения от бота. 
 Ваша роль - вносить позитив и поддержку в обсуждения, выражать свои положительные эмоции и вдохновлять других.
 ''']
-
         role = random.choice(roles)
-        fname = 'Soap'
-        lname = 'McTansh'
-        sex = '0'
-        photo_path = f'0/' + '_648449537cd47.jpg'
+        photo_names = os.listdir(f'data/images/{sex}')
+        photo_path = f'{sex}/' + random.choice(photo_names)
+
+        channels1 = ['BybitRussian_News', 'slezisatoshi', 'prometheus', 'roflpuls', 'v_utushkin', 'don_invest',
+                     'swoptoky_games', 'BogdanGdeX', 'dinar_banana', 'binance_ru']
+        print(self.listening_channels)
+        if all(i in channels1 for i in self.listening_channels):
+            print('Попал в channels1')
+            role = 'Ты криптоэксперт, пишешь комментарии в крипточатах. Разбираешься во всех монетах, криптовалютах. Пишешь коротко и ясно, по делу. Анализируешь тональность сообщений, которые я тебе отправляю, и исходя из этого пишешь комментарий. Пиши просторечно, максимально человечно. Не используй кавычки,  игнорируй emoji в сообщения от меня. и ничего не пиши про сообщения от бота.  '
+            fname = 'Soap'
+            lname = 'McTansh'
+            sex = '0'
+            photo_path = '0/_648449537cd47.jpg'
 
         await self.update_profile(fname, lname, photo_path)
         await self.update_db_data(fname=fname, lname=lname, sex=sex, photo_path=photo_path, role=role)
@@ -298,11 +312,11 @@ not a 1v1 dialog.
         pass
 
     async def replace_session(self):
-        logger.error(f'replace {self.session_id}')
         new_session_id = await db.get_random_free_session()
         if not new_session_id:
             logger.error('No free sessions')
             return
+        logger.error(f'replace {self.session_id}')
         old_session_id = self.session_id
         print(new_session_id)
         self.session_id = new_session_id
@@ -334,15 +348,18 @@ not a 1v1 dialog.
                 await client(
                     functions.messages.GetMessagesViewsRequest(peer=chat, id=[event.message.id], increment=True))
                 await asyncio.sleep(5)
-                res = await client(functions.messages.SendReactionRequest(
-                    peer=chat,
-                    msg_id=event.message.id,
-                    add_to_recent=True,
-                    reaction=[types.ReactionEmoji(
-                        emoticon=random.choice(['👍', '❤', '️🔥'])
-                    )]
-                ))
-
+                try:
+                    res = await client(functions.messages.SendReactionRequest(
+                        peer=chat,
+                        msg_id=event.message.id,
+                        add_to_recent=True,
+                        reaction=[types.ReactionEmoji(
+                            emoticon=random.choice(['👍', '❤', '️🔥'])
+                        )]
+                    ))
+                except Exception:
+                    # Reaction is limited in this chat
+                    pass
                 me: TgClient = await db.get_client(self.session_id)
 
                 sleep_time = random.randint(30, 5 * 60)
@@ -360,7 +377,7 @@ not a 1v1 dialog.
                         await client(functions.channels.JoinChannelRequest(channel.full_chat.linked_chat_id))
                     except errors.InviteRequestSentError:
                         print('Заявка на добавление отправлена')
-                        logger.error(traceback.format_exc())
+                        logger.error('Заявка на добавление отправлена')
                     await client.send_message(chat, text, comment_to=event.message.id)
             except Exception as ex:
                 logger.error(traceback.format_exc())
