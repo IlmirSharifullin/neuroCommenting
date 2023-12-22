@@ -10,4 +10,10 @@ router = Router(name='commands-router')
 
 @router.message(Command('start'), F.from_user.id.in_(ADMIN_LIST))
 async def start_cmd(message: types.Message):
+    user = await db.get_user(message.from_user.id)
+    print(user)
+    if not user:
+        user: User = await db.insert_user(message.from_user.id)
+    if len(await db.get_users_sessions(user.chat_id)) == 0:
+        pass
     await message.answer('Главное меню ', reply_markup=types.ReplyKeyboardMarkup(keyboard=[[types.KeyboardButton(text='Сессии')]], resize_keyboard=True))

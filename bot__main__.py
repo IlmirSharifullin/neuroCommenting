@@ -10,7 +10,7 @@ from aiogram.types import ErrorEvent
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 from bot.config import BOT_TOKEN, BASE_WEBHOOK_URL, WEBHOOK_PATH, WEBHOOK_SECRET, LOGS_CHANNEL_ID, \
-    WEB_SERVER_HOST, WEB_SERVER_PORT
+    WEB_SERVER_HOST, WEB_SERVER_PORT, user_running_sessions
 from bot.handlers import callbacks, commands, messages
 
 
@@ -65,6 +65,12 @@ async def main():
     return app
 
 
+async def disconnect_all_sessions():
+    for chat_id, sessions in user_running_sessions.items():
+        for session in sessions:
+            print(session)
+            await session.disconnect()
+
 if __name__ == "__main__":
     running_sessions = []
 
@@ -72,3 +78,5 @@ if __name__ == "__main__":
     app = asyncio.run(main())
 
     web.run_app(app, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT)
+    print('after web.run_app')
+    asyncio.run(disconnect_all_sessions())

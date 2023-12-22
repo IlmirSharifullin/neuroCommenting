@@ -3,7 +3,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ADMIN_LIST = [901977201]
+user_running_sessions = {}
+
+ADMIN_LIST = [901977201, 127517074]
 
 LOGS_CHANNEL_ID = os.getenv('LOGS_CHANNEL_ID')
 
