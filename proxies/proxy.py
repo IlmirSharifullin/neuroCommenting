@@ -1,12 +1,15 @@
 import re
+import traceback
 
 import python_socks
 
+from config import logger
+
 
 class Proxy:
-    with open('proxies/proxies.txt') as f:
-        proxy_file = f.read().split('\n')
-        proxy_count = len(proxy_file)
+    # with open('proxies/proxies.txt') as f:
+    #     proxy_file = f.read().split('\n')
+    #     proxy_count = len(proxy_file)
 
     def __init__(self, obj):
         if isinstance(obj, int):
@@ -33,8 +36,9 @@ class Proxy:
             user_pass, address_port = proxy_string.split('@')
             username, password = user_pass.split(':')
             address, port = address_port.split(':')
-            if port.is_digit():
+            if port.isdigit():
                 return True
         except Exception:
+            logger.error(traceback.format_exc())
             return False
         return False
