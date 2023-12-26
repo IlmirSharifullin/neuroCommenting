@@ -16,6 +16,8 @@ class EditAction(IntEnum):
     ANSWER_TIME = 5
     PROXY = 6
     LISTEN_CHANNELS = 7
+    SEND_AS = 8
+    USERNAME = 9
 
 
 class SessionsCallback(CallbackData, prefix='getsession'):
@@ -29,6 +31,10 @@ class TurnSessionsPageCallback(CallbackData, prefix='turning'):
 
 class EditSessionCallback(CallbackData, prefix='editsession'):
     action: EditAction
+    session_id: str
+
+
+class UpdateSessionCallback(CallbackData, prefix='updatesession'):
     session_id: str
 
 

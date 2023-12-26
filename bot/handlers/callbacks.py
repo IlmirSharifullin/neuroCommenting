@@ -48,7 +48,17 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
         await query.message.answer('Введите новый прокси в формате <login>:<password>@<ip>:<port>. Поддерживаемый протокол - <bold>SOCKS5!</bold>', parse_mode='html')
     elif callback_data.action == EditAction.LISTEN_CHANNELS:
         await query.message.answer('Приложите .txt файл, в котором каждое с новой строки перечислены юзернеймы каналов без "@" (или их invite hash в формате "+XXXXXX". \nПример: Ссылка для присоединения - t.me/+ABCDEF, invite_hash - "+ABCDEF").')
+    elif callback_data.action == EditAction.SEND_AS:
+        session = await db.get_client(callback_data.session_id)
+        if session.is_premium:
+            await query.message.answer('Введите юзернейм канала для отправки от его лица.\nВАЖНО!!! Для этого сессия должна быть владельцем этого канала.')
+        else:
+            await query.message.answer('Для настройки отправки от лица канала, нужно чтобы сессия обладала премиум аккаунтом. Вы можете подарить ему премиум.')
+            await state.clear()
+    elif callback_data.action == EditAction.USERNAME:
+        await query.message.answer('Введите новый юзернейм для сессии')
     else:
+        await state.clear()
         await query.message.answer('Пока не работает')
 
 
@@ -107,6 +117,18 @@ async def paid_cmd(query: CallbackQuery, state: FSMContext):
     await query.answer()
     await query.message.answer('Оплата прошла успешно! Ваши новые сессии появились в списке')
     await state.clear()
+
+
+@router.callback_query(UpdateSessionCallback.filter())
+async def update_session(query: CallbackQuery, callback_data: UpdateSessionCallback):
+    session_id = callback_data.session_id
+    client = Client(session_id)
+    await client.init_session()
+    await client.start()
+    me = await client.client.get_me()
+    await db.update_data(session_id, username=me.username, first_name=me.first_name, last_name=me.last_name, is_premium=me.premium)
+    await client.disconnect()
+    await query.answer('Сессия обновлена!')
 
 
 @router.callback_query()

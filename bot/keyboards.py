@@ -6,7 +6,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 
 import db.funcs as db
 from bot.misc import SessionsCallback, TurnSessionsPageCallback, EditSessionCallback, EditAction, \
-    StartStopSessionCallback
+    StartStopSessionCallback, UpdateSessionCallback
 
 
 def get_icon_by_status(status):
@@ -99,6 +99,15 @@ def get_session_edit_keyboard(session_id: str):
          InlineKeyboardButton(text='Изменить список каналов',
                               callback_data=EditSessionCallback(action=EditAction.LISTEN_CHANNELS,
                                                                 session_id=session_id).pack())
-         ]
+         ],
+        [InlineKeyboardButton(text='Изменить лицо отправки',
+                              callback_data=EditSessionCallback(action=EditAction.SEND_AS,
+                                                                session_id=session_id).pack()),
+         InlineKeyboardButton(text='Изменить имя пользователя',
+                              callback_data=EditSessionCallback(action=EditAction.USERNAME,
+                                                                session_id=session_id).pack()),
+        ],
+        [InlineKeyboardButton(text='Обновить сессию', callback_data=UpdateSessionCallback(session_id=session_id).pack())
+        ]
     ]
     return kb

@@ -3,6 +3,7 @@ import os
 
 from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
+from telethon import functions, errors
 
 import db.funcs as db
 from bot.config import BOT_TOKEN, ADMIN_LIST
@@ -75,7 +76,19 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
                 raise ValueError
             await db.update_data(session_id, min_answer_time=mini, max_answer_time=maxi)
         except ValueError:
-            await message.answer('Неверный формат ввода. Попробуйте еще раз..')
+            return await message.answer('Неверный формат ввода. Попробуйте еще раз..')
+    elif field == EditAction.SEND_AS:
+        session = Client(session_id)
+        await session.init_session()
+        await session.start()
+        try:
+            await session.client(functions.messages.SaveDefaultSendAsRequest('BotTalk', value))
+        except errors.PeerIdInvalidError | errors.SendAsPeerInvalidError:
+            await session.disconnect()
+            return await message.answer('Ошибка..')
+        else:
+            await db.update_data(session_id, send_as=value)
+        await session.disconnect()
     else:
         return await message.answer('Ошибка. Попробуйте еще раз')
 

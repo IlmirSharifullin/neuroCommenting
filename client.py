@@ -342,16 +342,22 @@ not a 1v1 dialog.
 
     async def message_handler(self, event: events.NewMessage.Event):
         chat = event.chat
-        print(chat)
         client: TelegramClient = self.client
         if chat.id in self.listening_channels or chat.username in self.listening_channels:
             try:
-                # if not random.randint(0, 2) or len(event.message.message) < 50:
-                #     print('not send')
-                #     logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
-                #     return
+                if not random.randint(0, 2) or len(event.message.message) < 50:
+                    print('not send')
+                    logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
+                    return
 
                 logger.info(f'{self.session_id} new message in {chat.username or chat.id}')
+
+                me: TgClient = await db.get_client(self.session_id)
+
+                sleep_time = random.randint(30, 5 * 60)
+                print(sleep_time)
+                logger.info(f'sleep for {sleep_time}')
+                await asyncio.sleep(sleep_time)
 
                 await client(
                     functions.messages.GetMessagesViewsRequest(peer=chat, id=[event.message.id], increment=True))
@@ -366,17 +372,18 @@ not a 1v1 dialog.
                         )]
                     ))
                 except Exception:
-                    # Reaction is limited in this chat
+                    # Reactions are limited in this chat
                     pass
-                me: TgClient = await db.get_client(self.session_id)
 
-                sleep_time = random.randint(30, 5 * 60)
-                print(sleep_time)
-                logger.info(f'sleep for {sleep_time}')
-                await asyncio.sleep(sleep_time)
                 text = await gpt.get_comment(event.message.message, role=me.role)
                 await asyncio.sleep(10)
 
+                if me.send_as is not None:
+                    try:
+                        await client(functions.messages.SaveDefaultSendAsRequest(chat, me.send_as))
+                    except errors.SendAsPeerInvalidError:
+                        # Отправить владельцу, что неправильный юзернейм
+                        pass
                 try:
                     await client.send_message(chat, text, comment_to=event.message.id)
                 except errors.ChatGuestSendForbiddenError:
