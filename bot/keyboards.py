@@ -2,7 +2,7 @@ import math
 from enum import Enum, IntEnum
 
 from aiogram.filters.callback_data import CallbackData
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
 import db.funcs as db
 from bot.misc import SessionsCallback, TurnSessionsPageCallback, EditSessionCallback, EditAction, \
@@ -23,8 +23,21 @@ def get_icon_by_status(status):
     return icon
 
 
+def get_main_keyboard():
+    kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Сессии'), KeyboardButton(text='Купить сессии')]],
+                             resize_keyboard=True)
+    return kb
+
+
+def get_main_admin_keyboard():
+    kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Сессии'), KeyboardButton(text='Купить сессии'), ],
+                                       [KeyboardButton(text='Добавить сессии')]],
+                             resize_keyboard=True)
+    return kb
+
+
 def get_sessions_keyboard(clients, page=1):
-    count_on_page = 4
+    count_on_page = 8
     pages_count = math.ceil(len(clients) / count_on_page)
     keyboard = InlineKeyboardMarkup(inline_keyboard=[])
     for i in range((page - 1) * count_on_page, min(page * count_on_page, len(clients)), 2):

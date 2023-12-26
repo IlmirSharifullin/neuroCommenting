@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 
 import db.funcs as db
 from bot.config import BOT_TOKEN, ADMIN_LIST
-from bot.misc import EditSessionState, get_session_info
+from bot.misc import EditSessionState, get_session_info, BuySessionState
 from client import Client, ProxyNotFoundError
 from db.models import *
 from bot.keyboards import *
@@ -139,6 +139,33 @@ async def get_listen_channels_cmd(message: types.Message, state: FSMContext):
             await message.answer('Неправильный формат')
     else:
         await message.answer('Ошибка. Попробуйте еще раз..')
+
+
+@router.message(F.text == 'Купить сессии')
+async def buy_sessions_cmd(message: types.Message, state: FSMContext):
+    free_sessions_count = await db.get_free_sessions_count()
+    await message.answer(f'Покупка доступна от 3-х сессий. На данный момент доступно {free_sessions_count} сессий.\nСтоимость - n рублей. Введите количество сессий к покупке.')
+    await state.set_state(BuySessionState.count)
+
+
+@router.message(BuySessionState.count)
+async def buy_sessions_count_cmd(message: types.Message, state: FSMContext):
+    count = message.text
+    if not count.isdigit():
+        return await message.answer('Введите число - количество сессий к покупке')
+
+    count = int(count)
+    if count < 3:
+        return await message.answer('Количество сессий должно быть не менее 3-х')
+
+    free_sessions_count = await db.get_free_sessions_count()
+    if count > free_sessions_count:
+        return await message.answer('Такое количество недоступно к покупке. Попробуйте в другой раз..')
+
+    await message.answer('Отлично! Вот ссылка на оплату', reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='Типо ссылка', callback_data='paid')]]))
+
+    await state.set_data({'count': count})
+    await state.set_state(BuySessionState.paying)
 
 
 @router.message()

@@ -11,7 +11,7 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 
 from bot.config import BOT_TOKEN, BASE_WEBHOOK_URL, WEBHOOK_PATH, WEBHOOK_SECRET, LOGS_CHANNEL_ID, \
     WEB_SERVER_HOST, WEB_SERVER_PORT, user_running_sessions
-from bot.handlers import callbacks, commands, messages
+from bot.handlers import callbacks, commands, messages, admin
 
 
 async def on_startup(bot: Bot):
@@ -32,7 +32,7 @@ async def main():
 
     dp = Dispatcher()
 
-    dp.include_routers(callbacks.router, commands.router, messages.router)
+    dp.include_routers(admin.router, callbacks.router, commands.router, messages.router, )
 
     @dp.error()
     async def error_handler(event: ErrorEvent):
@@ -65,6 +65,28 @@ async def main():
     return app
 
 
+async def polling_main():
+    logging.basicConfig(
+        filename='logs.log',
+        format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s  ',
+        datefmt='%d-%b-%y %H:%M:%S',
+        level=logging.INFO
+    )
+
+    dp = Dispatcher()
+
+    dp.include_routers(admin.router, callbacks.router, commands.router, messages.router, )
+
+    @dp.error()
+    async def error_handler(event: ErrorEvent):
+        logging.error(traceback.format_exc())
+        print(traceback.format_exc())
+        res = requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
+                            params={'chat_id': LOGS_CHANNEL_ID, 'text': traceback.format_exc()[-2000:]})
+
+    await dp.start_polling(bot)
+
+
 async def disconnect_all_sessions():
     for chat_id, sessions in user_running_sessions.items():
         for session in sessions:
@@ -72,11 +94,15 @@ async def disconnect_all_sessions():
             await session.disconnect()
 
 if __name__ == "__main__":
+    polling = True
+
     running_sessions = []
 
     bot = Bot(BOT_TOKEN, parse_mode='')
-    app = asyncio.run(main())
+    if polling:
+        asyncio.run(polling_main())
+    else:
+        app = asyncio.run(main())
 
-    web.run_app(app, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT)
-    print('after web.run_app')
+        web.run_app(app, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT)
     asyncio.run(disconnect_all_sessions())

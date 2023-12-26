@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.config import user_running_sessions
 from bot.handlers.messages import sessions_list_cmd
-from bot.misc import EditSessionState, get_session_info
+from bot.misc import EditSessionState, get_session_info, BuySessionState
 from client import Client
 from db.models import *
 from bot.keyboards import *
@@ -93,6 +93,20 @@ async def start_session(query: CallbackQuery, callback_data: StartStopSessionCal
         user_running_sessions[query.from_user.id] = running_sessions
         await query.message.answer('Клиент отключен')
     await query.answer()
+
+
+@router.callback_query(BuySessionState.paying, F.data == 'paid')
+async def paid_cmd(query: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    count = data['count']
+    sessions = await db.get_random_free_sessions(count)
+    for session in sessions:
+        print(session)
+        await db.set_owner_to_session(session.session_id, query.from_user.id)
+
+    await query.answer()
+    await query.message.answer('Оплата прошла успешно! Ваши новые сессии появились в списке')
+    await state.clear()
 
 
 @router.callback_query()

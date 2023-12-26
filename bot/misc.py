@@ -41,6 +41,15 @@ class EditSessionState(StatesGroup):
     val = State()
 
 
+class BuySessionState(StatesGroup):
+    count = State()
+    paying = State()
+
+
+class AddSessionsState(StatesGroup):
+    archive = State()
+
+
 async def get_session_info(session_id):
     session: TgClient = await db.get_client(session_id)
     listening_channels = await db.get_listening_channels(session.id)

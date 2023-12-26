@@ -90,6 +90,13 @@ async def insert_client(session_id: str, session: AsyncSession, status=ClientSta
 
 
 @with_session
+async def set_owner_to_session(session_id: str, owner_id, session: AsyncSession):
+    query = await session.execute(update(TgClient).filter_by(session_id=session_id)
+                                  .values(owner_id=owner_id, status=ClientStatusEnum.NOT_RUNNING.value))
+    await session.commit()
+
+
+@with_session
 async def set_status(session_id: str, status: ClientStatusEnum, session: AsyncSession):
     cli: TgClient = await get_client(session_id)
 
@@ -110,7 +117,7 @@ async def get_listening_channels(client_id: int, session: AsyncSession):
 
 
 @with_session
-async def update_listening_channels(session_id: str, channels_meta: List[str], session: AsyncSession):
+async def update_listening_channels(session_id: int, channels_meta: List[str], session: AsyncSession):
     query = await session.execute(delete(listen_table).filter_by(client_id=session_id))
     await session.commit()
     for channel_meta in channels_meta:
@@ -121,7 +128,7 @@ async def update_listening_channels(session_id: str, channels_meta: List[str], s
 @with_session
 async def update_data(session_id: str, session: AsyncSession, first_name: str = None, last_name: str = None,
                       about: str = None, role: str = None, proxy: str = None,
-                      username: str = None, min_answer_time: int = None, max_answer_time: int = None):
+                      username: str = None, min_answer_time: int = None, max_answer_time: int = None, is_premium: bool = False, send_as: str = None):
     client: TgClient = await get_client(session_id)
     await session.execute(
         update(TgClient).filter_by(session_id=session_id).values(first_name=first_name or client.first_name,
@@ -131,7 +138,9 @@ async def update_data(session_id: str, session: AsyncSession, first_name: str = 
                                                                  username=username or client.username,
                                                                  proxy=proxy or client.proxy,
                                                                  min_answer_time=min_answer_time or client.min_answer_time,
-                                                                 max_answer_time=max_answer_time or client.max_answer_time))
+                                                                 max_answer_time=max_answer_time or client.max_answer_time,
+                                                                 is_premium=is_premium or client.is_premium,
+                                                                 send_as=send_as or client.send_as))
 
     return await session.commit()
 
@@ -144,6 +153,20 @@ async def get_random_free_session(session: AsyncSession):
         return client.session_id
     else:
         return None
+
+
+@with_session
+async def get_random_free_sessions(count, session: AsyncSession):
+    query = await session.execute(select(TgClient).filter_by(status=ClientStatusEnum.REPLACEABLE.value).limit(count))
+    clients = list(query.scalars())
+    return clients
+
+
+@with_session
+async def get_free_sessions_count(session: AsyncSession):
+    query = await session.execute(select(TgClient).filter_by(status=ClientStatusEnum.REPLACEABLE.value))
+    client = list(query.scalars())
+    return len(client)
 
 
 @with_session

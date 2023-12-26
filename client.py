@@ -4,9 +4,7 @@ import json
 import os
 import random
 import shutil
-import time
 import traceback
-from typing import List
 
 from telethon import TelegramClient, events, functions, types, errors
 from telethon.errors import UserDeactivatedBanError, MsgIdInvalidError, ChannelPrivateError
@@ -23,25 +21,36 @@ class ProxyNotFoundError(Exception):
 
 
 class Client:
-    def __init__(self, session_id, proxy=None):
+    def __init__(self, session_id, proxy=None, debug=False, temp=False):
         self.session_id = session_id
         self.listening_channels = []
         self.proxy = proxy
+        self.debug = debug
+        self.temp = temp
 
     async def init_session(self):
-        with open(f'sessions/{self.session_id}/{self.session_id}.json') as f:
-            data = json.load(f)
-            app_id = data['app_id']
-            app_hash = data['app_hash']
-        session_path = f'sessions/{self.session_id}/{self.session_id}'
+        if self.temp:
+            with open(f'data/temp_sessions/{self.session_id}/{self.session_id}.json') as f:
+                data = json.load(f)
+                app_id = data['app_id']
+                app_hash = data['app_hash']
+            session_path = f'data/temp_sessions/{self.session_id}/{self.session_id}'
+        else:
+            with open(f'sessions/{self.session_id}/{self.session_id}.json') as f:
+                data = json.load(f)
+                app_id = data['app_id']
+                app_hash = data['app_hash']
+            session_path = f'sessions/{self.session_id}/{self.session_id}'
 
         # proxy = Proxy(self.proxy_id)
         proxy_line = await self._get_proxy_line()
         proxy = Proxy(proxy_line)
 
         me = await db.get_client(self.session_id)
-        self.listening_channels = await db.get_listening_channels(me.id)
-        print(self.listening_channels)
+        if me:
+            self.listening_channels = await db.get_listening_channels(me.id)
+        else:
+            self.listening_channels = []
 
         client = TelegramClient(session_path, app_id, app_hash,
                                 proxy=proxy.dict,
@@ -77,7 +86,8 @@ class Client:
     async def disconnect(self):
         try:
             await self.client.disconnect()
-            await db.set_status(self.session_id, db.ClientStatusEnum.NOT_RUNNING)
+            if not self.debug:
+                await db.set_status(self.session_id, db.ClientStatusEnum.NOT_RUNNING)
             logger.info(f'{self.session_id} disconnected')
         except Exception as ex:
             logger.error(traceback.format_exc())
@@ -87,19 +97,20 @@ class Client:
         if f:
             await self.main()
         else:
-            shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
             await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
-            await self.replace_session()
+            
+            # shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
+            # await self.replace_session()
 
     async def main(self):
         try:
             print('in main')
-            cli = await self.test_client()
+            username = await self.test_client()
             # logger.info(f'after test - {self.session_id}')
             await asyncio.sleep(5)
             me = await db.get_client(self.session_id)
 
-            await db.update_data(self.session_id, username=cli)
+            await db.update_data(self.session_id, username=username)
             await asyncio.sleep(5)
 
             await db.set_status(self.session_id, db.ClientStatusEnum.JOINING)
@@ -331,6 +342,7 @@ not a 1v1 dialog.
 
     async def message_handler(self, event: events.NewMessage.Event):
         chat = event.chat
+        print(chat)
         client: TelegramClient = self.client
         if chat.id in self.listening_channels or chat.username in self.listening_channels:
             try:

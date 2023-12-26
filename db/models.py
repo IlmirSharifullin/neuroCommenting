@@ -63,6 +63,8 @@ class TgClient(Base):
     proxy = Column(String(255), nullable=True)
     min_answer_time = Column(Integer(), default=30)
     max_answer_time = Column(Integer(), default=300)
+    is_premium = Column(Boolean(), default=False)
+    send_as = Column(String(255), nullable=True)
     owner_id = Column(Integer, ForeignKey('user.chat_id'), nullable=True)
     owner = relationship('User', back_populates='sessions')
 
