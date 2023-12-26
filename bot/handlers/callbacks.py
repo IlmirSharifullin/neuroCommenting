@@ -45,7 +45,7 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
         await query.message.answer(
             'Введите время ожидания перед отправкой коммента в формате <МИН>-<МАКС>. Ждет случайное кол-во секунд в этом промежутке, после чего отправит комментарий')
     elif callback_data.action == EditAction.PROXY:
-        await query.message.answer('Введите новый прокси в формате {login}:{password}@{ip}:{port}. Поддерживаемый протокол - <bold>SOCKS5!</bold>', parse_mode='html')
+        await query.message.answer('Введите новый прокси в формате {login}:{password}@{ip}:{port}. Поддерживаемый протокол - <b>SOCKS5!</b>', parse_mode='html')
     elif callback_data.action == EditAction.LISTEN_CHANNELS:
         await query.message.answer('Приложите .txt файл, в котором каждое с новой строки перечислены юзернеймы каналов без "@" (или их invite hash в формате "+XXXXXX". \nПример: Ссылка для присоединения - t.me/+ABCDEF, invite_hash - "+ABCDEF").')
     elif callback_data.action == EditAction.SEND_AS:
