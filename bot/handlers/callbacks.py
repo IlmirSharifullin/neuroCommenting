@@ -6,7 +6,7 @@ from bot.config import user_running_sessions
 from bot.handlers.commands import start_cmd, get_main_menu
 from bot.handlers.messages import sessions_list_cmd
 from bot.misc import EditSessionState, get_session_info, BuySessionState
-from client import Client
+from client import Client, ProxyNotFoundError
 from db.models import *
 from bot.keyboards import *
 
@@ -79,8 +79,10 @@ async def start_session(query: CallbackQuery, callback_data: StartStopSessionCal
         return False
 
     client = Client(session_id)
-    await client.init_session()
-
+    try:
+        await client.init_session()
+    except ProxyNotFoundError:
+        return await query.message.answer('У клиента не установлен прокси. Без прокси мы не можем запустить сессию для просмотра каналов.')
     running_sessions.append(client)
     user_running_sessions[query.from_user.id] = running_sessions
 
@@ -110,37 +112,29 @@ async def start_session(query: CallbackQuery, callback_data: StartStopSessionCal
     await query.answer()
 
 
-@router.callback_query(BuySessionState.paying, F.data == 'paid')
-async def paid_cmd(query: CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    count = data['count']
-    sessions = await db.get_random_free_sessions(count)
-    for session in sessions:
-        print(session)
-        await db.set_owner_to_session(session.session_id, query.from_user.id)
-
-    await query.answer()
-    await query.message.answer('Оплата прошла успешно! Ваши новые сессии появились в списке')
-    await state.clear()
-
-
 @router.callback_query(UpdateSessionCallback.filter())
 async def update_session(query: CallbackQuery, callback_data: UpdateSessionCallback):
     session_id = callback_data.session_id
-    client = Client(session_id)
-    await client.init_session()
-    await client.start()
-    me = await client.client.get_me()
-    await db.update_data(session_id, username=me.username, first_name=me.first_name, last_name=me.last_name,
-                         is_premium=me.premium)
-    await client.disconnect()
+    try:
+        client = Client(session_id)
+        await client.init_session()
+        await client.start()
+        me = await client.client.get_me()
+        await db.update_data(session_id, username=me.username, first_name=me.first_name, last_name=me.last_name,
+                             is_premium=me.premium)
+        await client.disconnect()
+    except ProxyNotFoundError:
+        return await query.message.answer('Без прокси мы не можем присоединяться к сессии для изменения профиля и тп. Добавьте прокси чтобы продолжить')
+
     await query.answer('Сессия обновлена!')
+    await session_cmd(query, callback_data)
 
 
-@router.callback_query(F.callback_data == 'returntomenu')
+@router.callback_query(F.data == 'backtomenu')
 async def return_to_menu(query: CallbackQuery):
     data = get_main_menu(query.from_user.id)
-    await query.message.edit_text(data['text'], data['reply_markup'])
+    await query.message.delete()
+    await query.message.answer(data['text'], reply_markup=data['reply_markup'])
 
 
 @router.callback_query(BackToListCallback.filter())
@@ -150,5 +144,4 @@ async def return_to_list(query: CallbackQuery, callback_data: BackToListCallback
 
 @router.callback_query()
 async def not_handled(query: CallbackQuery):
-    print(query.data.__class__)
     print('not handled')

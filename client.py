@@ -330,6 +330,7 @@ not a 1v1 dialog.
                              role=old_client.role)
 
     async def replace_session(self):
+        return logger.error('Замена недоступна')
         new_session_id = await db.get_random_free_session()
         if not new_session_id:
             logger.error('No free sessions')

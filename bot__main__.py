@@ -12,7 +12,7 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 
 from bot.config import BOT_TOKEN, BASE_WEBHOOK_URL, WEBHOOK_PATH, WEBHOOK_SECRET, LOGS_CHANNEL_ID, \
     WEB_SERVER_HOST, WEB_SERVER_PORT, user_running_sessions
-from bot.handlers import callbacks, commands, messages, admin
+from bot.handlers import callbacks, commands, messages, admin, buy_sessions
 from config import logger
 
 
@@ -79,7 +79,7 @@ async def polling_main():
 
     dp.callback_query.middleware(CallbackAnswerMiddleware())
 
-    dp.include_routers(admin.router, callbacks.router, commands.router, messages.router, )
+    dp.include_routers(admin.router, buy_sessions.router, callbacks.router, commands.router, messages.router, )
 
     @dp.error()
     async def error_handler(event: ErrorEvent):

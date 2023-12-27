@@ -36,6 +36,7 @@ class EditSessionCallback(CallbackData, prefix='editsession'):
 
 class UpdateSessionCallback(CallbackData, prefix='updatesession'):
     session_id: str
+    page: int
 
 
 class StartStopSessionCallback(CallbackData, prefix='startstopsession'):
@@ -45,6 +46,9 @@ class StartStopSessionCallback(CallbackData, prefix='startstopsession'):
 
 class BackToListCallback(CallbackData, prefix='backtolist'):
     page: int
+
+class BackToMenuCallback(CallbackData, prefix='backtomenu'):
+    pass
 
 
 class EditSessionState(StatesGroup):
@@ -70,6 +74,7 @@ async def get_session_info(session_id):
 Био: {session.about or ''}
 Статус: {ClientStatusEnum.get_label(session.status)}
 Премиум: {'Есть' if session.is_premium else 'Отсутствует'}
+Отвечать от имени: {session.send_as if session.send_as and session.is_premium else 'Сам'}
 Отвечает на пост прождав от {session.min_answer_time} до {session.max_answer_time} секунд
 Прокси: {'<span class="tg-spoiler">' + session.proxy + '</span>' if session.proxy else 'Нет прокси. Без прокси клиент не будет запускаться'}
 Роль: {session.role or ''}

@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 
 from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
@@ -47,65 +48,87 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
     field = data['field']
     session_id = data['session_id']
     value = message.text
+    try:
 
-    if field == EditAction.FIRST_NAME:
-        session = Client(session_id)
-        await session.init_session()
-        await session.start()
-        await session.update_profile(fname=value)
-        await session.disconnect()
-        await db.update_data(session_id, first_name=value)
-    elif field == EditAction.LAST_NAME:
-        session = Client(session_id)
-        await session.init_session()
-        await session.start()
-        await session.update_profile(lname=value)
-        await session.disconnect()
-        await db.update_data(session_id, last_name=value)
-    elif field == EditAction.ABOUT:
-        session = Client(session_id)
-        await session.init_session()
-        await session.start()
-        await session.update_profile(about=value)
-        await session.disconnect()
-        await db.update_data(session_id, about=value)
-    elif field == EditAction.ROLE:
-        await db.update_data(session_id, role=value)
-    elif field == EditAction.PROXY:
-        if Proxy.validate_proxy_format(value):
-            await db.update_data(session_id, proxy=value)
-        else:
-            await message.answer('Неверный формат прокси. Попробуйте еще раз..')
-            return
-    elif field == EditAction.ANSWER_TIME:
-        try:
-            mini, maxi = value.split('-')
-            mini, maxi = int(mini), int(maxi)
-            if mini > maxi:
-                raise ValueError
-            await db.update_data(session_id, min_answer_time=mini, max_answer_time=maxi)
-        except ValueError:
-            return await message.answer('Неверный формат ввода. Попробуйте еще раз..')
-    elif field == EditAction.SEND_AS:
-        session = Client(session_id)
-        await session.init_session()
-        await session.start()
-        try:
-            await session.client(functions.messages.SaveDefaultSendAsRequest('BotTalk', value))
-        except errors.PeerIdInvalidError | errors.SendAsPeerInvalidError:
+        if field == EditAction.FIRST_NAME:
+            session = Client(session_id)
+            await session.init_session()
+            await session.start()
+            await session.update_profile(fname=value)
             await session.disconnect()
-            return await message.answer('Ошибка..')
+            await db.update_data(session_id, first_name=value)
+        elif field == EditAction.LAST_NAME:
+            session = Client(session_id)
+            await session.init_session()
+            await session.start()
+            await session.update_profile(lname=value)
+            await session.disconnect()
+            await db.update_data(session_id, last_name=value)
+        elif field == EditAction.ABOUT:
+            session = Client(session_id)
+            await session.init_session()
+            await session.start()
+            await session.update_profile(about=value)
+            await session.disconnect()
+            await db.update_data(session_id, about=value)
+        elif field == EditAction.ROLE:
+            await db.update_data(session_id, role=value)
+        elif field == EditAction.PROXY:
+            if Proxy.validate_proxy_format(value):
+                await db.update_data(session_id, proxy=value)
+            else:
+                await message.answer('Неверный формат прокси. Попробуйте еще раз..')
+                return
+        elif field == EditAction.ANSWER_TIME:
+            try:
+                mini, maxi = value.split('-')
+                mini, maxi = int(mini), int(maxi)
+                if mini > maxi:
+                    raise ValueError
+                await db.update_data(session_id, min_answer_time=mini, max_answer_time=maxi)
+            except ValueError:
+                return await message.answer('Неверный формат ввода. Попробуйте еще раз..')
+        elif field == EditAction.SEND_AS:
+            session = Client(session_id)
+            await session.init_session()
+            await session.start()
+            try:
+                await session.client(functions.messages.SaveDefaultSendAsRequest('BotTalk', value))
+            except errors.PeerIdInvalidError | errors.SendAsPeerInvalidError:
+                await session.disconnect()
+                return await message.answer('Ошибка..')
+            else:
+                await db.update_data(session_id, send_as=value)
+            await session.disconnect()
+        elif field == EditAction.USERNAME:
+            if not re.match(r"[a-zA-Z][\w\d]{3,30}[a-zA-Z\d]", value):
+                return await message.answer('Неправильный юзернейм. Попробуйте еще раз..')
+
+            session = Client(session_id, )
+            await session.init_session()
+            await session.start()
+            try:
+                await session.client(functions.account.UpdateUsernameRequest(value))
+            except errors.UsernameInvalidError:
+                return await message.answer('Неправильный юзернейм. Попробуйте еще раз..')
+            except errors.UsernameNotModifiedError:
+                return await message.answer('Юзернейм не изменился')
+            except errors.UsernameOccupiedError:
+                return await message.answer('Юзернейм занят')
+            else:
+                await message.answer('Юзернейм успешно изменён')
+            await db.update_data(session_id, username=value)
+            await session.disconnect()
         else:
-            await db.update_data(session_id, send_as=value)
-        await session.disconnect()
-    else:
-        return await message.answer('Ошибка. Попробуйте еще раз')
+            return await message.answer('Ошибка. Попробуйте еще раз')
 
-    await state.clear()
+        await state.clear()
 
-    await message.answer(text=await get_session_info(session_id), reply_markup=get_session_edit_keyboard(session_id),
-                         parse_mode='html')
-    await message.answer('Смена произошла успешно!')
+        await message.answer(text=await get_session_info(session_id), reply_markup=get_session_edit_keyboard(session_id),
+                             parse_mode='html')
+        await message.answer('Смена произошла успешно!')
+    except ProxyNotFoundError:
+        await message.answer('Без прокси мы не можем присоединяться к сессии для изменения профиля. Добавьте прокси чтобы продолжить')
 
 
 @router.message(EditSessionState.val, F.content_type == 'photo')
@@ -123,7 +146,10 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
         await message.bot.download_file(file_info.file_path, f'data/images/{filename}')
 
         session = Client(session_id, [])
-        await session.init_session()
+        try:
+            await session.init_session()
+        except ProxyNotFoundError:
+            return await message.answer('У клиента нет прокси. Без прокси мы не можем подключиться к сессии для изменения профиля')
         await session.start()
         await session.update_profile(photo_path=filename)
         os.remove(f'data/images/{filename}')
@@ -162,35 +188,6 @@ async def get_listen_channels_cmd(message: types.Message, state: FSMContext):
             await message.answer('Неправильный формат')
     else:
         await message.answer('Ошибка. Попробуйте еще раз..')
-
-
-@router.message(F.text == 'Купить сессии')
-async def buy_sessions_cmd(message: types.Message, state: FSMContext):
-    free_sessions_count = await db.get_free_sessions_count()
-    await message.answer(
-        f'Покупка доступна от 3-х сессий. На данный момент доступно {free_sessions_count} сессий.\nСтоимость - n рублей. Введите количество сессий к покупке.')
-    await state.set_state(BuySessionState.count)
-
-
-@router.message(BuySessionState.count)
-async def buy_sessions_count_cmd(message: types.Message, state: FSMContext):
-    count = message.text
-    if not count.isdigit():
-        return await message.answer('Введите число - количество сессий к покупке')
-
-    count = int(count)
-    if count < 3:
-        return await message.answer('Количество сессий должно быть не менее 3-х')
-
-    free_sessions_count = await db.get_free_sessions_count()
-    if count > free_sessions_count:
-        return await message.answer('Такое количество недоступно к покупке. Попробуйте в другой раз..')
-
-    await message.answer('Отлично! Вот ссылка на оплату', reply_markup=InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text='Типо ссылка', callback_data='paid')]]))
-
-    await state.set_data({'count': count})
-    await state.set_state(BuySessionState.paying)
 
 
 @router.message()

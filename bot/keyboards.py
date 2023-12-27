@@ -6,7 +6,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 
 import db.funcs as db
 from bot.misc import SessionsCallback, TurnSessionsPageCallback, EditSessionCallback, EditAction, \
-    StartStopSessionCallback, UpdateSessionCallback, BackToListCallback
+    StartStopSessionCallback, UpdateSessionCallback, BackToListCallback, BackToMenuCallback
 
 
 def get_icon_by_status(status):
@@ -61,7 +61,7 @@ def get_sessions_keyboard(clients, page=1):
     right_button = InlineKeyboardButton(text=f"▶️",
                                         callback_data=TurnSessionsPageCallback(
                                             page=1 if page == pages_count else page + 1).pack())
-    back_button = InlineKeyboardButton(text=f'Назад', callback_data=f'returntomenu')
+    back_button = InlineKeyboardButton(text=f'Назад', callback_data='backtomenu')
     keyboard.inline_keyboard.append([left_button, back_button, right_button])
     return keyboard
 
@@ -108,7 +108,7 @@ def get_session_edit_keyboard(session_id: str, page: int = 1):
                                                                 session_id=session_id).pack()),
          ],
         [InlineKeyboardButton(text='Обновить сессию',
-                              callback_data=UpdateSessionCallback(session_id=session_id).pack()),
+                              callback_data=UpdateSessionCallback(session_id=session_id, page=page).pack()),
          InlineKeyboardButton(text='Назад', callback_data=BackToListCallback(page=page).pack())
          ]
     ]
