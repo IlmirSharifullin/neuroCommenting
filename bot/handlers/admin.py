@@ -22,14 +22,12 @@ async def add_sessions_cmd(message: Message, state: FSMContext):
 async def add_archive_sessions(message: Message, state: FSMContext):
     file_id = message.document.file_id
     file_format = message.document.mime_type
-    print(file_format)
     file_info = await message.bot.get_file(file_id)
     filename = f'temp{datetime.datetime.now()}'
     await message.bot.download_file(file_info.file_path, f'data/{filename}')
 
     read_archive_sessions(f'data/{filename}')
     res = await add_temp_sessions()
-    print()
     errors = '\n'.join(res['errors'])
 
     os.remove(f'data/{filename}')

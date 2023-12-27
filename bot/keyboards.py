@@ -6,7 +6,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 
 import db.funcs as db
 from bot.misc import SessionsCallback, TurnSessionsPageCallback, EditSessionCallback, EditAction, \
-    StartStopSessionCallback, UpdateSessionCallback
+    StartStopSessionCallback, UpdateSessionCallback, BackToListCallback
 
 
 def get_icon_by_status(status):
@@ -61,12 +61,12 @@ def get_sessions_keyboard(clients, page=1):
     right_button = InlineKeyboardButton(text=f"▶️",
                                         callback_data=TurnSessionsPageCallback(
                                             page=1 if page == pages_count else page + 1).pack())
-    back_button = InlineKeyboardButton(text=f'Назад', callback_data=f'cancel')
+    back_button = InlineKeyboardButton(text=f'Назад', callback_data=f'returntomenu')
     keyboard.inline_keyboard.append([left_button, back_button, right_button])
     return keyboard
 
 
-def get_session_edit_keyboard(session_id: str):
+def get_session_edit_keyboard(session_id: str, page: int = 1):
     kb = InlineKeyboardMarkup(inline_keyboard=[])
     kb.inline_keyboard = [
         [InlineKeyboardButton(text='Запустить клиент',
@@ -106,8 +106,10 @@ def get_session_edit_keyboard(session_id: str):
          InlineKeyboardButton(text='Изменить имя пользователя',
                               callback_data=EditSessionCallback(action=EditAction.USERNAME,
                                                                 session_id=session_id).pack()),
-        ],
-        [InlineKeyboardButton(text='Обновить сессию', callback_data=UpdateSessionCallback(session_id=session_id).pack())
-        ]
+         ],
+        [InlineKeyboardButton(text='Обновить сессию',
+                              callback_data=UpdateSessionCallback(session_id=session_id).pack()),
+         InlineKeyboardButton(text='Назад', callback_data=BackToListCallback(page=page).pack())
+         ]
     ]
     return kb

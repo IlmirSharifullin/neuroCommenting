@@ -9,6 +9,7 @@ import traceback
 from telethon import TelegramClient, events, functions, types, errors
 from telethon.errors import UserDeactivatedBanError, MsgIdInvalidError, ChannelPrivateError
 
+from bot.notifications import notify_owner
 from config import logger
 import db.funcs as db
 import chatgpt.funcs as gpt
@@ -86,7 +87,7 @@ class Client:
     async def disconnect(self):
         try:
             await self.client.disconnect()
-            if not self.debug:
+            if not self.temp:
                 await db.set_status(self.session_id, db.ClientStatusEnum.NOT_RUNNING)
             logger.info(f'{self.session_id} disconnected')
         except Exception as ex:
@@ -108,7 +109,7 @@ class Client:
             username = await self.test_client()
             # logger.info(f'after test - {self.session_id}')
             await asyncio.sleep(5)
-            me = await db.get_client(self.session_id)
+            me: TgClient = await db.get_client(self.session_id)
 
             await db.update_data(self.session_id, username=username)
             await asyncio.sleep(5)
@@ -119,8 +120,11 @@ class Client:
             await self.subscribe_channels()
             logger.info(
                 f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}\nstart\nlisten: {self.listening_channels}')
-            print('старт')
+
+            await notify_owner(me.owner_id, f'@{me.username or ""} {me.first_name} {me.last_name} подписался на каналы и начал прослушивать каналы')
+
             await db.set_status(self.session_id, db.ClientStatusEnum.RUNNING)
+
             needs = True
             if needs:
                 self.client.add_event_handler(self.message_handler, events.NewMessage())
@@ -130,6 +134,13 @@ class Client:
             shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
             logger.info(f'{self.session_id} client banned')
             await self.replace_session()
+        except ConnectionError:
+            me = await db.get_client(self.session_id)
+            await notify_owner(me.owner_id, 'Ошибка при подключении к серверам Телеграма. Попробуем еще раз через минуту')
+            await self.disconnect()
+            await asyncio.sleep(60)
+            await notify_owner(me.owner_id, 'Пробуем снова')
+            await self.run()
         except Exception as ex:
             logger.error(traceback.format_exc())
 
@@ -398,7 +409,8 @@ not a 1v1 dialog.
                 # при посте с несколькими фото прилетает несколько ивентов, обрабатывается только основной с текстом.
                 pass
             except ChannelPrivateError as ex:
-                # Обработать ситуации когда клиент забанен в чате
-                pass
+                if not self.debug:
+                    db_me: TgClient = await db.get_client(self.session_id)
+                    await notify_owner(db_me.owner, f'Сессию {db_me.username} {db_me.first_name} {db_me.last_name} забанили в канале {chat.username or chat.id}. Он больше не может оставлять комментарии под постами.')
             except Exception as ex:
                 logger.error(traceback.format_exc())

@@ -3,7 +3,7 @@ from enum import IntEnum
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.state import StatesGroup, State
 
-from db.models import TgClient
+from db.models import TgClient, ClientStatusEnum
 import db.funcs as db
 
 
@@ -43,6 +43,10 @@ class StartStopSessionCallback(CallbackData, prefix='startstopsession'):
     session_id: str
 
 
+class BackToListCallback(CallbackData, prefix='backtolist'):
+    page: int
+
+
 class EditSessionState(StatesGroup):
     val = State()
 
@@ -60,10 +64,13 @@ async def get_session_info(session_id):
     session: TgClient = await db.get_client(session_id)
     listening_channels = await db.get_listening_channels(session.id)
     text = f'''
-@{session.username}
+@{session.username or ''}
 Имя: {session.first_name or ''}
 Фамилия: {session.last_name or ''}
 Био: {session.about or ''}
+Статус: {ClientStatusEnum.get_label(session.status)}
+Премиум: {'Есть' if session.is_premium else 'Отсутствует'}
+Отвечает на пост прождав от {session.min_answer_time} до {session.max_answer_time} секунд
 Прокси: {'<span class="tg-spoiler">' + session.proxy + '</span>' if session.proxy else 'Нет прокси. Без прокси клиент не будет запускаться'}
 Роль: {session.role or ''}
 Список прослушиваемых каналов: '''
@@ -73,4 +80,5 @@ async def get_session_info(session_id):
         else:
             text += f'@{channel_meta}'
         text += ', '
+    text = text[:-2]
     return text

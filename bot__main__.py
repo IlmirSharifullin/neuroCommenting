@@ -3,6 +3,7 @@ import traceback
 
 import asyncio
 import requests
+from aiogram.utils.callback_answer import CallbackAnswerMiddleware
 from aiohttp import web
 
 from aiogram import Bot, Dispatcher
@@ -12,6 +13,7 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from bot.config import BOT_TOKEN, BASE_WEBHOOK_URL, WEBHOOK_PATH, WEBHOOK_SECRET, LOGS_CHANNEL_ID, \
     WEB_SERVER_HOST, WEB_SERVER_PORT, user_running_sessions
 from bot.handlers import callbacks, commands, messages, admin
+from config import logger
 
 
 async def on_startup(bot: Bot):
@@ -75,15 +77,13 @@ async def polling_main():
 
     dp = Dispatcher()
 
+    dp.callback_query.middleware(CallbackAnswerMiddleware())
+
     dp.include_routers(admin.router, callbacks.router, commands.router, messages.router, )
 
     @dp.error()
     async def error_handler(event: ErrorEvent):
-        logging.error(traceback.format_exc())
-        print(traceback.format_exc())
-        res = requests.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',
-                            params={'chat_id': LOGS_CHANNEL_ID, 'text': traceback.format_exc()[-2000:]})
-
+        logger.error(traceback.format_exc())
     await dp.start_polling(bot)
 
 

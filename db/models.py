@@ -12,6 +12,21 @@ class ClientStatusEnum(Enum):
     REPLACEABLE = 1
     BANNED = 0
 
+    @classmethod
+    def get_label(cls, status):
+        if status == cls.BANNED.value:
+            return 'Забанен'
+        elif status == cls.REPLACEABLE.value:
+            return 'Может быть заменен'
+        elif status == cls.NOT_RUNNING.value:
+            return 'Не запущен'
+        elif status == cls.JOINING.value:
+            return 'Присоединяется'
+        elif status == cls.RUNNING.value:
+            return 'Запущен'
+        else:
+            return 'Неизвестный статус'
+
 
 class ChannelStatusEnum(Enum):
     OK = 1

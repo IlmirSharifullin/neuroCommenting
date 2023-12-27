@@ -32,6 +32,15 @@ async def sessions_list_cmd(message: types.Message, page=1, from_callback=False)
         await message.answer('\n'.join(msg), parse_mode='', reply_markup=kb)
 
 
+@router.message(EditSessionState.val, F.text == 'Отмена')
+async def cancel_edit(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    session_id = data['session_id']
+    await state.clear()
+    await message.answer(text=await get_session_info(session_id), reply_markup=get_session_edit_keyboard(session_id),
+                         parse_mode='html')
+
+
 @router.message(EditSessionState.val, F.content_type == 'text')
 async def edit_state_cmd(message: types.Message, state: FSMContext):
     data = await state.get_data()
@@ -94,7 +103,8 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
 
     await state.clear()
 
-    await message.answer(text=await get_session_info(session_id), reply_markup=get_session_edit_keyboard(session_id), parse_mode='html')
+    await message.answer(text=await get_session_info(session_id), reply_markup=get_session_edit_keyboard(session_id),
+                         parse_mode='html')
     await message.answer('Смена произошла успешно!')
 
 
@@ -157,7 +167,8 @@ async def get_listen_channels_cmd(message: types.Message, state: FSMContext):
 @router.message(F.text == 'Купить сессии')
 async def buy_sessions_cmd(message: types.Message, state: FSMContext):
     free_sessions_count = await db.get_free_sessions_count()
-    await message.answer(f'Покупка доступна от 3-х сессий. На данный момент доступно {free_sessions_count} сессий.\nСтоимость - n рублей. Введите количество сессий к покупке.')
+    await message.answer(
+        f'Покупка доступна от 3-х сессий. На данный момент доступно {free_sessions_count} сессий.\nСтоимость - n рублей. Введите количество сессий к покупке.')
     await state.set_state(BuySessionState.count)
 
 
@@ -175,7 +186,8 @@ async def buy_sessions_count_cmd(message: types.Message, state: FSMContext):
     if count > free_sessions_count:
         return await message.answer('Такое количество недоступно к покупке. Попробуйте в другой раз..')
 
-    await message.answer('Отлично! Вот ссылка на оплату', reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='Типо ссылка', callback_data='paid')]]))
+    await message.answer('Отлично! Вот ссылка на оплату', reply_markup=InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text='Типо ссылка', callback_data='paid')]]))
 
     await state.set_data({'count': count})
     await state.set_state(BuySessionState.paying)

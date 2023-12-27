@@ -1,10 +1,9 @@
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, FSInputFile, InputFile
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from aiogram.types import CallbackQuery
 
 from bot.config import user_running_sessions
+from bot.handlers.commands import start_cmd, get_main_menu
 from bot.handlers.messages import sessions_list_cmd
 from bot.misc import EditSessionState, get_session_info, BuySessionState
 from client import Client
@@ -19,7 +18,8 @@ async def session_cmd(query: CallbackQuery, callback_data: SessionsCallback):
     await query.answer()
 
     kb = get_session_edit_keyboard(callback_data.session_id)
-    await query.message.answer(text=await get_session_info(callback_data.session_id), reply_markup=kb, parse_mode='html')
+    await query.message.edit_text(text=await get_session_info(callback_data.session_id), reply_markup=kb,
+                                  parse_mode='html')
 
 
 @router.callback_query(TurnSessionsPageCallback.filter())
@@ -32,7 +32,7 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
     await state.set_state(EditSessionState.val)
     await state.update_data(field=callback_data.action, session_id=callback_data.session_id)
     if callback_data.action == EditAction.FIRST_NAME:
-        await query.message.answer('Введите новое имя клиента')
+        await query.message.answer('Введите новое имя клиента.')
     elif callback_data.action == EditAction.LAST_NAME:
         await query.message.answer('Введите новую фамилию клиента')
     elif callback_data.action == EditAction.ABOUT:
@@ -45,15 +45,20 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
         await query.message.answer(
             'Введите время ожидания перед отправкой коммента в формате <МИН>-<МАКС>. Ждет случайное кол-во секунд в этом промежутке, после чего отправит комментарий')
     elif callback_data.action == EditAction.PROXY:
-        await query.message.answer('Введите новый прокси в формате {login}:{password}@{ip}:{port}. Поддерживаемый протокол - <b>SOCKS5!</b>', parse_mode='html')
+        await query.message.answer(
+            'Введите новый прокси в формате {login}:{password}@{ip}:{port}. Поддерживаемый протокол - <b>SOCKS5!</b>',
+            parse_mode='html')
     elif callback_data.action == EditAction.LISTEN_CHANNELS:
-        await query.message.answer('Приложите .txt файл, в котором каждое с новой строки перечислены юзернеймы каналов без "@" (или их invite hash в формате "+XXXXXX". \nПример: Ссылка для присоединения - t.me/+ABCDEF, invite_hash - "+ABCDEF").')
+        await query.message.answer(
+            'Приложите .txt файл, в котором каждое с новой строки перечислены юзернеймы каналов без "@" (или их invite hash в формате "+XXXXXX". \nПример: Ссылка для присоединения - t.me/+ABCDEF, invite_hash - "+ABCDEF").')
     elif callback_data.action == EditAction.SEND_AS:
         session = await db.get_client(callback_data.session_id)
         if session.is_premium:
-            await query.message.answer('Введите юзернейм канала для отправки от его лица.\nВАЖНО!!! Для этого сессия должна быть владельцем этого канала.')
+            await query.message.answer(
+                'Введите юзернейм канала для отправки от его лица.\nВАЖНО!!! Для этого сессия должна быть владельцем этого канала.')
         else:
-            await query.message.answer('Для настройки отправки от лица канала, нужно чтобы сессия обладала премиум аккаунтом. Вы можете подарить ему премиум.')
+            await query.message.answer(
+                'Для настройки отправки от лица канала, нужно чтобы сессия обладала премиум аккаунтом. Вы можете подарить ему премиум.')
             await state.clear()
     elif callback_data.action == EditAction.USERNAME:
         await query.message.answer('Введите новый юзернейм для сессии')
@@ -126,9 +131,21 @@ async def update_session(query: CallbackQuery, callback_data: UpdateSessionCallb
     await client.init_session()
     await client.start()
     me = await client.client.get_me()
-    await db.update_data(session_id, username=me.username, first_name=me.first_name, last_name=me.last_name, is_premium=me.premium)
+    await db.update_data(session_id, username=me.username, first_name=me.first_name, last_name=me.last_name,
+                         is_premium=me.premium)
     await client.disconnect()
     await query.answer('Сессия обновлена!')
+
+
+@router.callback_query(F.callback_data == 'returntomenu')
+async def return_to_menu(query: CallbackQuery):
+    data = get_main_menu(query.from_user.id)
+    await query.message.edit_text(data['text'], data['reply_markup'])
+
+
+@router.callback_query(BackToListCallback.filter())
+async def return_to_list(query: CallbackQuery, callback_data: BackToListCallback):
+    await sessions_list_cmd(query.message, page=callback_data.page, from_callback=True)
 
 
 @router.callback_query()

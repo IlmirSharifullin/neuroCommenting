@@ -1,5 +1,6 @@
 from aiogram import Router, types, F
 from aiogram.filters import Command
+from aiogram.types import CallbackQuery
 
 from bot.config import ADMIN_LIST
 from db.models import *
@@ -16,8 +17,14 @@ async def start_cmd(message: types.Message):
     if len(await db.get_users_sessions(user.chat_id)) == 0:
         pass
 
-    if message.from_user.id in ADMIN_LIST:
+    data = get_main_menu(message.from_user.id)
+    await message.answer(data['text'], reply_markup=data['reply_markup'])
+
+
+def get_main_menu(uid: int):
+    if uid in ADMIN_LIST:
         kb = get_main_admin_keyboard()
     else:
         kb = get_main_keyboard()
-    await message.answer('Главное меню ', reply_markup=kb)
+
+    return {'text': 'Главное меню', 'reply_markup': kb}
