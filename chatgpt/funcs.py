@@ -10,7 +10,7 @@ client = OpenAI()
 async def get_comment(post: str, role: str):
     # start_time = datetime.datetime.now()
     completion = client.chat.completions.create(
-        model="gpt-3.5-turbo-1106",
+        model="gpt-4",
         messages=[
             {"role": "system", "content": role},
             {"role": "user", "content": f'{post}'}
