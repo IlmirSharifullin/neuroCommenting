@@ -16,8 +16,9 @@ def encode_image(image_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 
-async def get_comment(post: str, role: str, photo_path: str):
+async def get_comment(post: str, role: str, photo_path: str = None):
     # start_time = datetime.datetime.now()
+    photo_path = None
     if photo_path is not None:
         base64_image = encode_image(photo_path)
         headers = {
