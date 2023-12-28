@@ -7,9 +7,9 @@ from config import logger
 
 
 class Proxy:
-    # with open('proxies/proxies.txt') as f:
-    #     proxy_file = f.read().split('\n')
-    #     proxy_count = len(proxy_file)
+    with open('proxies/proxies.txt') as f:
+        proxy_file = f.read().split('\n')
+        proxy_count = len(proxy_file)
 
     def __init__(self, obj):
         if isinstance(obj, int):

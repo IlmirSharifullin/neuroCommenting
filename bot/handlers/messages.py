@@ -119,6 +119,12 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
                 await message.answer('Юзернейм успешно изменён')
             await db.update_data(session_id, username=value)
             await session.disconnect()
+        elif field == EditAction.ANSWER_POSTS:
+            if value.isdigit():
+                value = int(value)
+                await db.update_data(session_id, answer_posts=value)
+            else:
+                return await message.answer('Нужно ввести число')
         else:
             return await message.answer('Ошибка. Попробуйте еще раз')
 

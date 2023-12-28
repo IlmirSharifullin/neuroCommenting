@@ -8,6 +8,7 @@ import traceback
 
 from telethon import TelegramClient, events, functions, types, errors
 from telethon.errors import UserDeactivatedBanError, MsgIdInvalidError, ChannelPrivateError
+from telethon.tl.types import Photo
 
 from bot.notifications import notify_owner
 from config import logger
@@ -80,6 +81,9 @@ class Client:
             if await self.client.is_user_authorized():
                 await self.client.start()
                 return True
+        except ConnectionError as ex:
+            await asyncio.sleep(30)
+            return await self.start()
         except Exception as ex:
             logger.error(traceback.format_exc())
         return False
@@ -99,7 +103,7 @@ class Client:
             await self.main()
         else:
             await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
-            
+
             # shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
             # await self.replace_session()
 
@@ -121,7 +125,8 @@ class Client:
             logger.info(
                 f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}\nstart\nlisten: {self.listening_channels}')
 
-            await notify_owner(me.owner_id, f'@{me.username or ""} {me.first_name} {me.last_name} подписался на каналы и начал прослушивать каналы')
+            await notify_owner(me.owner_id,
+                               f'@{me.username or ""} {me.first_name} {me.last_name} подписался на каналы и начал прослушивать каналы')
 
             await db.set_status(self.session_id, db.ClientStatusEnum.RUNNING)
 
@@ -136,10 +141,12 @@ class Client:
             await self.replace_session()
         except ConnectionError:
             me = await db.get_client(self.session_id)
-            await notify_owner(me.owner_id, 'Ошибка при подключении к серверам Телеграма. Попробуем еще раз через минуту')
+            await notify_owner(me.owner_id,
+                               'Ошибка при подключении к серверам Телеграма. Попробуем еще раз через минуту')
             await self.disconnect()
             await asyncio.sleep(60)
             await notify_owner(me.owner_id, 'Пробуем снова')
+            self.listening_channels = await db.get_listening_channels(me.id)
             await self.run()
         except Exception as ex:
             logger.error(traceback.format_exc())
@@ -357,14 +364,19 @@ not a 1v1 dialog.
         client: TelegramClient = self.client
         if chat.id in self.listening_channels or chat.username in self.listening_channels:
             try:
-                if not random.randint(0, 2) or len(event.message.message) < 50:
+                me: TgClient = await db.get_client(self.session_id)
+                filename = None
+
+                if event.message.id % me.answer_posts != 0:
                     print('not send')
                     logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
                     return
 
+                if isinstance(event.message.media,
+                              types.MessageMediaPhoto):  # является ли тип вложения сообщения фотографией
+                    filename = f'temp{datetime.datetime.now()}.jpg'
+                    await event.message.download_media(file=filename, thumb=-1)
                 logger.info(f'{self.session_id} new message in {chat.username or chat.id}')
-
-                me: TgClient = await db.get_client(self.session_id)
 
                 sleep_time = random.randint(30, 5 * 60)
                 print(sleep_time)
@@ -387,14 +399,15 @@ not a 1v1 dialog.
                     # Reactions are limited in this chat
                     pass
 
-                text = await gpt.get_comment(event.message.message, role=me.role)
+                text = await gpt.get_comment(event.message.message, role=me.role, photo_path=filename)
                 await asyncio.sleep(10)
-
-                if me.send_as is not None:
+                os.remove(filename)
+                if me.is_premium and me.send_as is not None:
                     try:
                         await client(functions.messages.SaveDefaultSendAsRequest(chat, me.send_as))
                     except errors.SendAsPeerInvalidError:
-                        # Отправить владельцу, что неправильный юзернейм
+                        await notify_owner(me.owner_id,
+                                           f'У аккаунта {me} указан неправильный юзернейм, от лица которого нужно писать комментарии')
                         pass
                 try:
                     await client.send_message(chat, text, comment_to=event.message.id)
@@ -412,6 +425,7 @@ not a 1v1 dialog.
             except ChannelPrivateError as ex:
                 if not self.debug:
                     db_me: TgClient = await db.get_client(self.session_id)
-                    await notify_owner(db_me.owner, f'Сессию {db_me.username} {db_me.first_name} {db_me.last_name} забанили в канале {chat.username or chat.id}. Он больше не может оставлять комментарии под постами.')
+                    await notify_owner(db_me.owner,
+                                       f'Сессию {db_me.username} {db_me.first_name} {db_me.last_name} забанили в канале {chat.username or chat.id}. Он больше не может оставлять комментарии под постами.')
             except Exception as ex:
                 logger.error(traceback.format_exc())

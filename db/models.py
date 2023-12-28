@@ -34,8 +34,10 @@ class ChannelStatusEnum(Enum):
 
 
 class UserStatusEnum(Enum):
+    BANNED = 0
     OK = 1
-    BANNED = 2
+    ADMIN = 555
+    MAIN_ADMIN = 777
 
 
 class Base(DeclarativeBase):
@@ -78,13 +80,17 @@ class TgClient(Base):
     proxy = Column(String(255), nullable=True)
     min_answer_time = Column(Integer(), default=30)
     max_answer_time = Column(Integer(), default=300)
+    answer_posts = Column(Integer(), default=2)
     is_premium = Column(Boolean(), default=False)
     send_as = Column(String(255), nullable=True)
     owner_id = Column(Integer, ForeignKey('user.chat_id'), nullable=True)
     owner = relationship('User', back_populates='sessions')
 
-    def __str__(self):
+    def __repr__(self):
         return f'Client <{self.session_id}, {self.status}>'
+
+    def __str__(self):
+        return f'@{self.username} {self.first_name} {self.last_name}'
 
 
 class User(Base):

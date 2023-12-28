@@ -128,19 +128,22 @@ async def update_listening_channels(session_id: int, channels_meta: List[str], s
 @with_session
 async def update_data(session_id: str, session: AsyncSession, first_name: str = None, last_name: str = None,
                       about: str = None, role: str = None, proxy: str = None,
-                      username: str = None, min_answer_time: int = None, max_answer_time: int = None, is_premium: bool = False, send_as: str = None):
+                      username: str = None, min_answer_time: int = None, max_answer_time: int = None,
+                      answer_posts: int = None, is_premium: bool = False, send_as: str = None):
     client: TgClient = await get_client(session_id)
     await session.execute(
-        update(TgClient).filter_by(session_id=session_id).values(first_name=first_name or client.first_name,
-                                                                 last_name=last_name or client.last_name,
-                                                                 about=about or client.about,
-                                                                 role=role or client.role,
-                                                                 username=username or client.username,
-                                                                 proxy=proxy or client.proxy,
-                                                                 min_answer_time=min_answer_time or client.min_answer_time,
-                                                                 max_answer_time=max_answer_time or client.max_answer_time,
-                                                                 is_premium=is_premium or client.is_premium,
-                                                                 send_as=send_as or client.send_as))
+        update(TgClient).filter_by(session_id=session_id)
+        .values(first_name=first_name or client.first_name,
+                last_name=last_name or client.last_name,
+                about=about or client.about,
+                role=role or client.role,
+                username=username or client.username,
+                proxy=proxy or client.proxy,
+                min_answer_time=min_answer_time or client.min_answer_time,
+                max_answer_time=max_answer_time or client.max_answer_time,
+                answer_posts=answer_posts or client.answer_posts,
+                is_premium=is_premium or client.is_premium,
+                send_as=send_as or client.send_as))
 
     return await session.commit()
 

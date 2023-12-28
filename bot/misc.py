@@ -18,6 +18,7 @@ class EditAction(IntEnum):
     LISTEN_CHANNELS = 7
     SEND_AS = 8
     USERNAME = 9
+    ANSWER_POSTS = 10
 
 
 class SessionsCallback(CallbackData, prefix='getsession'):
@@ -76,6 +77,7 @@ async def get_session_info(session_id):
 Премиум: {'Есть' if session.is_premium else 'Отсутствует'}
 Отвечать от имени: {session.send_as if session.send_as and session.is_premium else 'Сам'}
 Отвечает на пост прождав от {session.min_answer_time} до {session.max_answer_time} секунд
+Отвечает на каждый {session.answer_posts}-й пост в канале
 Прокси: {'<span class="tg-spoiler">' + session.proxy + '</span>' if session.proxy else 'Нет прокси. Без прокси клиент не будет запускаться'}
 Роль: {session.role or ''}
 Список прослушиваемых каналов: '''

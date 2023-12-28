@@ -62,6 +62,8 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
             await state.clear()
     elif callback_data.action == EditAction.USERNAME:
         await query.message.answer('Введите новый юзернейм для сессии')
+    elif callback_data.action == EditAction.ANSWER_POSTS:
+        await query.message.answer('Введите число n. Бот будет отвечать на каждый n-ый пост в отслеживаемых каналах.')
     else:
         await state.clear()
         await query.message.answer('Пока не работает')
