@@ -97,43 +97,32 @@ class Client:
         except Exception as ex:
             logger.error(traceback.format_exc())
 
-    async def run(self):
+    async def run(self, restart=False):
         f = await self.start()
         if f:
-            await self.main()
+            await self.main(restart=restart)
         else:
             await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
 
             # shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
             # await self.replace_session()
 
-    async def main(self):
+    async def main(self, restart=False):
         try:
-            print('in main')
-            username = await self.test_client()
-            # logger.info(f'after test - {self.session_id}')
-            await asyncio.sleep(5)
-            me: TgClient = await db.get_client(self.session_id)
+            if not restart:
+                print('in main')
+                username = await self.test_client()
+                # logger.info(f'after test - {self.session_id}')
+                await asyncio.sleep(5)
 
-            await db.update_data(self.session_id, username=username)
-            await asyncio.sleep(5)
+                await db.update_data(self.session_id, username=username)
+                await asyncio.sleep(5)
 
-            await db.set_status(self.session_id, db.ClientStatusEnum.JOINING)
-            # logger.info(f'{self.session_id} - started subscribing')
-            start_time = datetime.datetime.now()
-            await self.subscribe_channels()
-            logger.info(
-                f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}\nstart\nlisten: {self.listening_channels}')
+                await self.join_channels()
 
-            await notify_owner(me.owner_id,
-                               f'@{me.username or ""} {me.first_name} {me.last_name} подписался на каналы и начал прослушивать каналы')
+                await db.set_status(self.session_id, db.ClientStatusEnum.RUNNING)
 
-            await db.set_status(self.session_id, db.ClientStatusEnum.RUNNING)
-
-            needs = True
-            if needs:
-                self.client.add_event_handler(self.message_handler, events.NewMessage())
-            await self.client.run_until_disconnected()
+            await self.set_handler()
         except UserDeactivatedBanError:
             await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
             shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
@@ -141,15 +130,33 @@ class Client:
             await self.replace_session()
         except ConnectionError:
             me = await db.get_client(self.session_id)
-            await notify_owner(me.owner_id,
-                               'Ошибка при подключении к серверам Телеграма. Попробуем еще раз через минуту')
+            # await notify_owner(me.owner_id,
+            #                    'Ошибка при подключении к серверам Телеграма. Попробуем еще раз через минуту')
             await self.disconnect()
-            await asyncio.sleep(60)
-            await notify_owner(me.owner_id, 'Пробуем снова')
-            self.listening_channels = await db.get_listening_channels(me.id)
-            await self.run()
+            await asyncio.sleep(5)
+            # await notify_owner(me.owner_id, 'Пробуем снова')
+            await self.run(restart=True)
         except Exception as ex:
             logger.error(traceback.format_exc())
+
+    async def set_handler(self):
+        self.client.remove_event_handler(self.message_handler)
+        self.client.add_event_handler(self.message_handler, events.NewMessage())
+
+        await self.client.run_until_disconnected()
+
+    async def join_channels(self):
+        me: TgClient = await db.get_client(self.session_id)
+
+        await db.set_status(self.session_id, db.ClientStatusEnum.JOINING)
+        # logger.info(f'{self.session_id} - started subscribing')
+        start_time = datetime.datetime.now()
+        await self.subscribe_channels()
+        logger.info(
+            f'{self.session_id} - ended subscribing : {datetime.datetime.now() - start_time}\nstart\nlisten: {self.listening_channels}')
+
+        await notify_owner(me.owner_id,
+                           f'{me} подписался на каналы и начал их прослушивать')
 
     async def subscribe_channels(self):
         me = await db.get_client(self.session_id)
@@ -368,19 +375,18 @@ not a 1v1 dialog.
                 filename = None
 
                 if event.message.id % me.answer_posts != 0:
-                    print('not send')
-                    logger.info(f'not send {event.message.id} in {chat.username or chat.id}')
+                    logger.info(f'{me.first_name} {me.last_name} not send {event.message.id} in {chat.username or chat.id}')
                     return
 
-                if isinstance(event.message.media,
-                              types.MessageMediaPhoto):  # является ли тип вложения сообщения фотографией
-                    filename = f'temp{datetime.datetime.now()}.jpg'
-                    await event.message.download_media(file=filename, thumb=-1)
-                logger.info(f'{self.session_id} new message in {chat.username or chat.id}')
+                # if isinstance(event.message.media,
+                #               types.MessageMediaPhoto):  # является ли тип вложения сообщения фотографией
+                #     filename = f'temp{datetime.datetime.now()}.jpg'
+                #     await event.message.download_media(file=filename, thumb=-1)
+                logger.info(f'{me.first_name} {me.last_name} new message in {chat.username or chat.title or chat.id}')
 
                 sleep_time = random.randint(30, 5 * 60)
                 print(sleep_time)
-                logger.info(f'sleep for {sleep_time}')
+                logger.info(f'{me.first_name} {me.last_name} sleeps for {sleep_time}')
                 await asyncio.sleep(sleep_time)
 
                 await client(
@@ -401,13 +407,13 @@ not a 1v1 dialog.
 
                 text = await gpt.get_comment(event.message.message, role=me.role, photo_path=filename)
                 await asyncio.sleep(10)
-                os.remove(filename)
+                # os.remove(filename)
                 if me.is_premium and me.send_as is not None:
                     try:
                         await client(functions.messages.SaveDefaultSendAsRequest(chat, me.send_as))
                     except errors.SendAsPeerInvalidError:
-                        await notify_owner(me.owner_id,
-                                           f'У аккаунта {me} указан неправильный юзернейм, от лица которого нужно писать комментарии')
+                        # await notify_owner(me.owner_id,
+                        #                    f'У аккаунта {me} указан неправильный юзернейм, от лица которого нужно писать комментарии')
                         pass
                 try:
                     await client.send_message(chat, text, comment_to=event.message.id)
@@ -425,7 +431,7 @@ not a 1v1 dialog.
             except ChannelPrivateError as ex:
                 if not self.debug:
                     db_me: TgClient = await db.get_client(self.session_id)
-                    await notify_owner(db_me.owner,
+                    await notify_owner(db_me.owner_id,
                                        f'Сессию {db_me.username} {db_me.first_name} {db_me.last_name} забанили в канале {chat.username or chat.id}. Он больше не может оставлять комментарии под постами.')
             except Exception as ex:
                 logger.error(traceback.format_exc())
