@@ -10,6 +10,7 @@ ADMIN_LIST = [901977201, 127517074]
 LOGS_CHANNEL_ID = os.getenv('LOGS_CHANNEL_ID')
 
 BOT_TOKEN = os.getenv('BOT_TOKEN')
+BOT2_TOKEN = os.getenv('BOT2_TOKEN')
 DB_URL = os.getenv('DB_URL')
 
 WEB_SERVER_HOST = os.getenv('WEB_SERVER_HOST')

@@ -11,7 +11,7 @@ from aiogram.types import ErrorEvent
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 from bot.config import BOT_TOKEN, BASE_WEBHOOK_URL, WEBHOOK_PATH, WEBHOOK_SECRET, LOGS_CHANNEL_ID, \
-    WEB_SERVER_HOST, WEB_SERVER_PORT, user_running_sessions
+    WEB_SERVER_HOST, WEB_SERVER_PORT, user_running_sessions, BOT2_TOKEN
 from bot.handlers import callbacks, commands, messages, admin, buy_sessions
 from config import logger
 
@@ -84,7 +84,7 @@ async def polling_main():
     @dp.error()
     async def error_handler(event: ErrorEvent):
         logger.error(traceback.format_exc())
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, bot2)
 
 
 async def disconnect_all_sessions():
@@ -99,6 +99,7 @@ if __name__ == "__main__":
     running_sessions = []
 
     bot = Bot(BOT_TOKEN, parse_mode='')
+    bot2 = Bot(BOT2_TOKEN, parse_mode='')
     if polling:
         asyncio.run(polling_main())
     else:
