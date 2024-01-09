@@ -3,9 +3,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
 from bot.config import user_running_sessions
-from bot.handlers.commands import start_cmd, get_main_menu
+from bot.handlers.commands import get_main_menu
 from bot.handlers.messages import sessions_list_cmd
-from bot.misc import EditSessionState, get_session_info, BuySessionState
+from bot.misc import EditSessionState, get_session_info
 from client import Client, ProxyNotFoundError
 from db.models import *
 from bot.keyboards import *
@@ -16,8 +16,8 @@ router = Router(name='callbacks-router')
 @router.callback_query(SessionsCallback.filter())
 async def session_cmd(query: CallbackQuery, callback_data: SessionsCallback):
     await query.answer()
-
-    kb = get_session_edit_keyboard(callback_data.session_id)
+    session = await db.get_client(callback_data.session_id)
+    kb = get_session_edit_keyboard(callback_data.session_id, is_reacting=session.is_reacting)
     await query.message.edit_text(text=await get_session_info(callback_data.session_id), reply_markup=kb,
                                   parse_mode='html')
 
@@ -64,6 +64,16 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
         await query.message.answer('Введите новый юзернейм для аккаунта')
     elif callback_data.action == EditAction.ANSWER_POSTS:
         await query.message.answer('Введите число n. Бот будет отвечать на каждый n-ый пост в отслеживаемых каналах.')
+    elif callback_data.action == EditAction.IS_REACTING:
+        session = await db.get_client(callback_data.session_id)
+        await db.update_data(callback_data.session_id, is_reacting=not session.is_reacting)
+        await query.answer('Изменено успешно!')
+        await state.clear()
+
+        session = await db.get_client(callback_data.session_id)
+        kb = get_session_edit_keyboard(callback_data.session_id, is_reacting=session.is_reacting)
+        await query.message.edit_text(text=await get_session_info(callback_data.session_id), reply_markup=kb,
+                                      parse_mode='html')
     else:
         await state.clear()
         await query.message.answer('Пока не работает')

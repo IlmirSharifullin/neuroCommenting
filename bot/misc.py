@@ -19,6 +19,7 @@ class EditAction(IntEnum):
     SEND_AS = 8
     USERNAME = 9
     ANSWER_POSTS = 10
+    IS_REACTING = 11
 
 
 class SessionsCallback(CallbackData, prefix='getsession'):
@@ -75,7 +76,8 @@ async def get_session_info(session_id):
 Био: {session.about or ''}
 Статус: {ClientStatusEnum.get_label(session.status)}
 Премиум: {'Есть' if session.is_premium else 'Отсутствует'}
-Отвечать от имени: {session.send_as if session.send_as and session.is_premium else 'Сам'}
+Ставит реакции на комментарии под постами: {'Да' if session.is_reacting else 'Нет'}
+Отвечает от имени: {session.send_as if session.send_as and session.is_premium else 'Своего'}
 Отвечает на пост прождав от {session.min_answer_time} до {session.max_answer_time} секунд
 Отвечает на каждый {session.answer_posts}-й пост в канале
 Прокси: {'<span class="tg-spoiler">' + session.proxy + '</span>' if session.proxy else 'Нет прокси. Без прокси клиент не будет запускаться'}

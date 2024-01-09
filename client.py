@@ -342,6 +342,9 @@ class Client:
             except Exception as ex:
                 logger.error(traceback.format_exc())
         elif not chat.broadcast and chat.megagroup:
+            session = await db.get_client(self.session_id)
+            if not session.is_reacting:
+                return
             # комментарий
             try:
                 channel = await client(functions.channels.GetFullChannelRequest(chat))

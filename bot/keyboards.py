@@ -66,7 +66,7 @@ def get_sessions_keyboard(clients, page=1):
     return keyboard
 
 
-def get_session_edit_keyboard(session_id: str, page: int = 1):
+def get_session_edit_keyboard(session_id: str, page: int = 1, is_reacting: bool = False):
     kb = InlineKeyboardMarkup(inline_keyboard=[])
     kb.inline_keyboard = [
         [InlineKeyboardButton(text='Запустить клиент',
@@ -109,6 +109,11 @@ def get_session_edit_keyboard(session_id: str, page: int = 1):
          InlineKeyboardButton(text='Изменить время комментирования',
                               callback_data=EditSessionCallback(action=EditAction.ANSWER_TIME,
                                                                 session_id=session_id).pack()),
+         ],
+        [InlineKeyboardButton(
+            text='Выключить реакции на комментарии' if is_reacting else 'Включить реакции на комментарии',
+            callback_data=EditSessionCallback(action=EditAction.IS_REACTING,
+                                              session_id=session_id).pack())
          ],
         [InlineKeyboardButton(text='Обновить сессию',
                               callback_data=UpdateSessionCallback(session_id=session_id, page=page).pack()),

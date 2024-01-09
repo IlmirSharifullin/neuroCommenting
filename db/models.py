@@ -82,6 +82,7 @@ class TgClient(Base):
     max_answer_time = Column(Integer(), default=300)
     answer_posts = Column(Integer(), default=2)
     is_premium = Column(Boolean(), default=False)
+    is_reacting = Column(Boolean(), default=False)
     send_as = Column(String(255), nullable=True)
     owner_id = Column(Integer, ForeignKey('user.chat_id'), nullable=True)
     owner = relationship('User', back_populates='sessions')

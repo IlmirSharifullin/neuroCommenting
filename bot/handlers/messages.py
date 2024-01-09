@@ -37,8 +37,10 @@ async def sessions_list_cmd(message: types.Message, page=1, from_callback=False)
 async def cancel_edit(message: types.Message, state: FSMContext):
     data = await state.get_data()
     session_id = data['session_id']
+
+    session = await db.get_client(session_id)
     await state.clear()
-    await message.answer(text=await get_session_info(session_id), reply_markup=get_session_edit_keyboard(session_id),
+    await message.answer(text=await get_session_info(session_id), reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting),
                          parse_mode='html')
 
 
@@ -129,8 +131,8 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
             return await message.answer('Ошибка. Попробуйте еще раз')
 
         await state.clear()
-
-        await message.answer(text=await get_session_info(session_id), reply_markup=get_session_edit_keyboard(session_id),
+        session = await db.get_client(session_id)
+        await message.answer(text=await get_session_info(session_id), reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting),
                              parse_mode='html')
         await message.answer('Смена произошла успешно!')
     except ProxyNotFoundError:
@@ -187,8 +189,9 @@ async def get_listen_channels_cmd(message: types.Message, state: FSMContext):
 
             await state.clear()
 
+            session = await db.get_client(session_id)
             await message.answer(text=await get_session_info(session_id),
-                                 reply_markup=get_session_edit_keyboard(session_id), parse_mode='html')
+                                 reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting), parse_mode='html')
             await message.answer('Готово!')
         else:
             await message.answer('Неправильный формат')

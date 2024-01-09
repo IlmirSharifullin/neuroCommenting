@@ -129,7 +129,8 @@ async def update_listening_channels(session_id: int, channels_meta: List[str], s
 async def update_data(session_id: str, session: AsyncSession, first_name: str = None, last_name: str = None,
                       about: str = None, role: str = None, proxy: str = None,
                       username: str = None, min_answer_time: int = None, max_answer_time: int = None,
-                      answer_posts: int = None, is_premium: bool = False, send_as: str = None):
+                      answer_posts: int = None, is_premium: bool = False, send_as: str = None,
+                      is_reacting: bool = None):
     client: TgClient = await get_client(session_id)
     await session.execute(
         update(TgClient).filter_by(session_id=session_id)
@@ -143,7 +144,8 @@ async def update_data(session_id: str, session: AsyncSession, first_name: str = 
                 max_answer_time=max_answer_time or client.max_answer_time,
                 answer_posts=answer_posts or client.answer_posts,
                 is_premium=is_premium or client.is_premium,
-                send_as=send_as or client.send_as))
+                send_as=send_as or client.send_as,
+                is_reacting=is_reacting or (client.is_reacting if is_reacting is None else False)))
 
     return await session.commit()
 
