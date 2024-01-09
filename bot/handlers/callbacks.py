@@ -55,13 +55,13 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
         session = await db.get_client(callback_data.session_id)
         if session.is_premium:
             await query.message.answer(
-                'Введите юзернейм канала для отправки от его лица.\nВАЖНО!!! Для этого сессия должна быть владельцем этого канала.')
+                'Введите юзернейм канала для отправки от его лица.\nВАЖНО!!! Для этого аккаунт должен быть владельцем этого канала.')
         else:
             await query.message.answer(
-                'Для настройки отправки от лица канала, нужно чтобы сессия обладала премиум аккаунтом. Вы можете подарить ему премиум.')
+                'Для настройки отправки от лица канала, нужно чтобы аккаунт обладал премиумом. Вы можете подарить ему премиум.')
             await state.clear()
     elif callback_data.action == EditAction.USERNAME:
-        await query.message.answer('Введите новый юзернейм для сессии')
+        await query.message.answer('Введите новый юзернейм для аккаунта')
     elif callback_data.action == EditAction.ANSWER_POSTS:
         await query.message.answer('Введите число n. Бот будет отвечать на каждый n-ый пост в отслеживаемых каналах.')
     else:
@@ -84,7 +84,7 @@ async def start_session(query: CallbackQuery, callback_data: StartStopSessionCal
     try:
         await client.init_session()
     except ProxyNotFoundError:
-        return await query.message.answer('У клиента не установлен прокси. Без прокси мы не можем запустить сессию для просмотра каналов.')
+        return await query.message.answer('У клиента не установлен прокси. Без прокси мы не можем запустить его для просмотра каналов.')
     running_sessions.append(client)
     user_running_sessions[query.from_user.id] = running_sessions
 
@@ -126,7 +126,7 @@ async def update_session(query: CallbackQuery, callback_data: UpdateSessionCallb
                              is_premium=me.premium)
         await client.disconnect()
     except ProxyNotFoundError:
-        return await query.message.answer('Без прокси мы не можем присоединяться к сессии для изменения профиля и тп. Добавьте прокси чтобы продолжить')
+        return await query.message.answer('Без прокси мы не можем присоединяться к аккаунту для изменения профиля и тп. Добавьте прокси чтобы продолжить')
 
     await query.answer('Сессия обновлена!')
     await session_cmd(query, callback_data)

@@ -51,21 +51,21 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
     try:
 
         if field == EditAction.FIRST_NAME:
-            session = Client(session_id)
+            session = Client(session_id, changing=True)
             await session.init_session()
             await session.start()
             await session.update_profile(fname=value)
             await session.disconnect()
             await db.update_data(session_id, first_name=value)
         elif field == EditAction.LAST_NAME:
-            session = Client(session_id)
+            session = Client(session_id, changing=True)
             await session.init_session()
             await session.start()
             await session.update_profile(lname=value)
             await session.disconnect()
             await db.update_data(session_id, last_name=value)
         elif field == EditAction.ABOUT:
-            session = Client(session_id)
+            session = Client(session_id, changing=True)
             await session.init_session()
             await session.start()
             await session.update_profile(about=value)
@@ -89,7 +89,7 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
             except ValueError:
                 return await message.answer('Неверный формат ввода. Попробуйте еще раз..')
         elif field == EditAction.SEND_AS:
-            session = Client(session_id)
+            session = Client(session_id, changing=True)
             await session.init_session()
             await session.start()
             try:
@@ -104,7 +104,7 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
             if not re.match(r"[a-zA-Z][\w\d]{3,30}[a-zA-Z\d]", value):
                 return await message.answer('Неправильный юзернейм. Попробуйте еще раз..')
 
-            session = Client(session_id, )
+            session = Client(session_id, changing=True)
             await session.init_session()
             await session.start()
             try:
@@ -151,7 +151,7 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
         filename = f'tempprofilephoto{datetime.datetime.now()}.jpg'
         await message.bot.download_file(file_info.file_path, f'data/images/{filename}')
 
-        session = Client(session_id, [])
+        session = Client(session_id, changing=True)
         try:
             await session.init_session()
         except ProxyNotFoundError:
