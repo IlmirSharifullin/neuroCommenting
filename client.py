@@ -101,7 +101,7 @@ class Client:
             await self.main(restart=restart)
         else:
             await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
-
+            logger.error(f'{self.session_id} banned when start')
             # shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
             # await self.replace_session()
 
@@ -124,7 +124,7 @@ class Client:
         except UserDeactivatedBanError:
             await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
             shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
-            logger.info(f'{self.session_id} client banned')
+            logger.info(f'{self.session_id} banned while running')
             await self.replace_session()
         except ConnectionError:
             me = await db.get_client(self.session_id)

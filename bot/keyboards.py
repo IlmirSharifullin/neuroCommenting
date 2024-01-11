@@ -2,7 +2,7 @@ import math
 from enum import Enum, IntEnum
 
 from aiogram.filters.callback_data import CallbackData
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 
 import db.funcs as db
 from bot.misc import SessionsCallback, TurnSessionsPageCallback, EditSessionCallback, EditAction, \
@@ -24,13 +24,17 @@ def get_icon_by_status(status):
 
 
 def get_main_keyboard():
-    kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Сессии'), KeyboardButton(text='Купить сессии')]],
+    kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Сессии'), KeyboardButton(text='Купить сессии')],
+                                       [KeyboardButton(text='Поддежка'), KeyboardButton(text='Инфо', web_app=WebAppInfo(
+                                           url='https://telegra.ph/INFO-dlya-polzovaniya-nejrokommentingom-01-11'))]],
                              resize_keyboard=True)
     return kb
 
 
 def get_main_admin_keyboard():
     kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Сессии'), KeyboardButton(text='Купить сессии'), ],
+                                       [KeyboardButton(text='Поддежка'), KeyboardButton(text='Инфо', web_app=WebAppInfo(
+                                           url='https://telegra.ph/INFO-dlya-polzovaniya-nejrokommentingom-01-11'))],
                                        [KeyboardButton(text='Добавить сессии')]],
                              resize_keyboard=True)
     return kb
@@ -114,7 +118,7 @@ def get_session_edit_keyboard(session_id: str, page: int = 1, is_reacting: bool 
             text='Выключить реакции на комментарии' if is_reacting else 'Включить реакции на комментарии',
             callback_data=EditSessionCallback(action=EditAction.IS_REACTING,
                                               session_id=session_id).pack())
-         ],
+        ],
         [InlineKeyboardButton(text='Обновить сессию',
                               callback_data=UpdateSessionCallback(session_id=session_id, page=page).pack()),
          InlineKeyboardButton(text='Назад', callback_data=BackToListCallback(page=page).pack())

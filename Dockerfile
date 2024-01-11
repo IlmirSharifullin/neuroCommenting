@@ -8,4 +8,4 @@ COPY . .
 RUN apt-get update && apt-get install -y libpq-dev python3-dev
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-CMD [ "python", "bot__main__.py"]
+CMD [ "python", "__main__.py"]

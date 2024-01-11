@@ -6,15 +6,18 @@ from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
 from telethon import functions, errors
 
-import db.funcs as db
-from bot.config import BOT_TOKEN, ADMIN_LIST
-from bot.misc import EditSessionState, get_session_info, BuySessionState
+from bot.config import ADMIN_LIST
+from bot.misc import EditSessionState, get_session_info
 from client import Client, ProxyNotFoundError
-from db.models import *
 from bot.keyboards import *
 from proxies.proxy import Proxy
 
 router = Router(name='messages-router')
+
+
+@router.message(F.text == 'Поддержка')
+async def support_cmd(message: types.Message):
+    await message.answer('При появлении вопросов пишите @zamaneurosupport')
 
 
 @router.message((F.text == 'Сессии') & (F.from_user.id in ADMIN_LIST))
@@ -40,7 +43,8 @@ async def cancel_edit(message: types.Message, state: FSMContext):
 
     session = await db.get_client(session_id)
     await state.clear()
-    await message.answer(text=await get_session_info(session_id), reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting),
+    await message.answer(text=await get_session_info(session_id),
+                         reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting),
                          parse_mode='html')
 
 
@@ -132,11 +136,13 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
 
         await state.clear()
         session = await db.get_client(session_id)
-        await message.answer(text=await get_session_info(session_id), reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting),
+        await message.answer(text=await get_session_info(session_id),
+                             reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting),
                              parse_mode='html')
         await message.answer('Смена произошла успешно!')
     except ProxyNotFoundError:
-        await message.answer('Без прокси мы не можем присоединяться к сессии для изменения профиля. Добавьте прокси чтобы продолжить')
+        await message.answer(
+            'Без прокси мы не можем присоединяться к сессии для изменения профиля. Добавьте прокси чтобы продолжить')
 
 
 @router.message(EditSessionState.val, F.content_type == 'photo')
@@ -157,7 +163,8 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
         try:
             await session.init_session()
         except ProxyNotFoundError:
-            return await message.answer('У клиента нет прокси. Без прокси мы не можем подключиться к сессии для изменения профиля')
+            return await message.answer(
+                'У клиента нет прокси. Без прокси мы не можем подключиться к сессии для изменения профиля')
         await session.start()
         await session.update_profile(photo_path=filename)
         os.remove(f'data/images/{filename}')
@@ -191,7 +198,8 @@ async def get_listen_channels_cmd(message: types.Message, state: FSMContext):
 
             session = await db.get_client(session_id)
             await message.answer(text=await get_session_info(session_id),
-                                 reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting), parse_mode='html')
+                                 reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting),
+                                 parse_mode='html')
             await message.answer('Готово!')
         else:
             await message.answer('Неправильный формат')
