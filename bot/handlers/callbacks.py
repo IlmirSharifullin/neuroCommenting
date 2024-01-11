@@ -40,7 +40,7 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
     elif callback_data.action == EditAction.ROLE:
         await query.message.answer('Введите новую роль клиента')
     elif callback_data.action == EditAction.PHOTO:
-        await query.message.answer('Приложите новое фото (не файлом)')
+        await query.message.answer('Приложите новое фото (не файлом, не видео)')
     elif callback_data.action == EditAction.ANSWER_TIME:
         await query.message.answer(
             'Введите время ожидания перед отправкой коммента в формате <МИН>-<МАКС>. Ждет случайное кол-во секунд в этом промежутке, после чего отправит комментарий')
