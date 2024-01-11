@@ -33,7 +33,7 @@ def get_main_keyboard():
 
 def get_main_admin_keyboard():
     kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Сессии'), KeyboardButton(text='Купить сессии'), ],
-                                       [KeyboardButton(text='Поддежка'), KeyboardButton(text='Инфо', web_app=WebAppInfo(
+                                       [KeyboardButton(text='Поддержка'), KeyboardButton(text='Инфо', web_app=WebAppInfo(
                                            url='https://telegra.ph/INFO-dlya-polzovaniya-nejrokommentingom-01-11'))],
                                        [KeyboardButton(text='Добавить сессии')]],
                              resize_keyboard=True)
