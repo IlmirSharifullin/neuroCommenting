@@ -100,8 +100,9 @@ class Client:
         if f:
             await self.main(restart=restart)
         else:
-            await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
-            logger.error(f'{self.session_id} banned when start')
+            if not self.changing:
+                await db.set_status(self.session_id, db.ClientStatusEnum.BANNED)
+                logger.error(f'{self.session_id} banned when start')
             # shutil.move(f'sessions/{self.session_id}', 'sessions_banned/')
             # await self.replace_session()
 
