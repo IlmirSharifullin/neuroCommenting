@@ -79,7 +79,7 @@ async def polling_main():
 
     dp.callback_query.middleware(CallbackAnswerMiddleware())
 
-    dp.include_routers(admin.router, buy_sessions.router, callbacks.router, commands.router, messages.router, )
+    dp.include_routers(admin.router, commands.router, buy_sessions.router, callbacks.router, messages.router, )
 
     @dp.error()
     async def error_handler(event: ErrorEvent):

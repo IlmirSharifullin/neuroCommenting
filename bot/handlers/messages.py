@@ -20,6 +20,11 @@ async def support_cmd(message: types.Message):
     await message.answer('При появлении вопросов пишите @zamaneurosupport')
 
 
+@router.message(F.text == 'Инфо')
+async def support_cmd(message: types.Message):
+    await message.answer('https://telegra.ph/INFO-dlya-polzovaniya-nejrokommentingom-01-11')
+
+
 @router.message((F.text == 'Сессии') & (F.from_user.id in ADMIN_LIST))
 async def sessions_list_cmd(message: types.Message, page=1, from_callback=False):
     msg = []
