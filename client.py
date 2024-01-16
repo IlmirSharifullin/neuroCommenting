@@ -291,7 +291,7 @@ class Client:
                 #     await event.message.download_media(file=filename, thumb=-1)
                 logger.info(f'{me.first_name} {me.last_name} new message in {chat.username or chat.title or chat.id}')
 
-                sleep_time = random.randint(30, 5 * 60)
+                sleep_time = random.randint(me.min_answer_time, me.max_answer_time)
                 print(sleep_time)
                 logger.info(f'{me.first_name} {me.last_name} sleeps for {sleep_time}')
                 await asyncio.sleep(sleep_time)
