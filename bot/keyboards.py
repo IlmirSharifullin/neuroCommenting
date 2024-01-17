@@ -69,7 +69,7 @@ def get_sessions_keyboard(clients, page=1):
     return keyboard
 
 
-def get_session_edit_keyboard(session_id: str, page: int = 1, is_reacting: bool = False):
+def get_session_edit_keyboard(session_id: str, session, page: int = 1):
     kb = InlineKeyboardMarkup(inline_keyboard=[])
     kb.inline_keyboard = [
         [InlineKeyboardButton(text='Запустить клиент',
@@ -113,10 +113,15 @@ def get_session_edit_keyboard(session_id: str, page: int = 1, is_reacting: bool 
                               callback_data=EditSessionCallback(action=EditAction.ANSWER_TIME,
                                                                 session_id=session_id).pack()),
          ],
-        [InlineKeyboardButton(
-            text='Выключить реакции на комментарии' if is_reacting else 'Включить реакции на комментарии',
-            callback_data=EditSessionCallback(action=EditAction.IS_REACTING,
-                                              session_id=session_id).pack())
+        [
+            InlineKeyboardButton(
+                text='Выключить реакции на комментарии' if session.is_reacting else 'Включить реакции на комментарии',
+                callback_data=EditSessionCallback(action=EditAction.IS_REACTING,
+                                                  session_id=session_id).pack()),
+            InlineKeyboardButton(
+                text='Выключить нейросеть' if session.is_neuro else 'Включить нейросеть',
+                callback_data=EditSessionCallback(action=EditAction.IS_NEURO_OFF if session.is_neuro else EditAction.IS_NEURO_ON,
+                                                  session_id=session_id).pack())
         ],
         [InlineKeyboardButton(text='Обновить сессию',
                               callback_data=UpdateSessionCallback(session_id=session_id, page=page).pack()),

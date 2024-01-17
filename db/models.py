@@ -1,8 +1,7 @@
-import asyncio
 from enum import Enum
 
-from sqlalchemy import String, Integer, Column, Table, ForeignKey, UniqueConstraint, SmallInteger, Boolean
-from sqlalchemy.orm import DeclarativeBase, mapped_column, relationship
+from sqlalchemy import String, Integer, Column, Table, ForeignKey, UniqueConstraint, Boolean
+from sqlalchemy.orm import DeclarativeBase, relationship
 
 
 class ClientStatusEnum(Enum):
@@ -84,6 +83,8 @@ class TgClient(Base):
     is_premium = Column(Boolean(), default=False)
     is_reacting = Column(Boolean(), default=False)
     send_as = Column(String(255), nullable=True)
+    is_neuro = Column(Boolean, default=False)
+    text = Column(String, nullable=True)
     owner_id = Column(Integer, ForeignKey('user.chat_id'), nullable=True)
     owner = relationship('User', back_populates='sessions')
 
@@ -100,3 +101,15 @@ class User(Base):
     chat_id = Column(Integer, primary_key=True)
     status = Column(Integer, nullable=False, default=UserStatusEnum.OK.value)
     sessions = relationship('TgClient', back_populates='owner')
+
+
+class Poem(Base):
+    __tablename__ = 'poem'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    text = Column(String, nullable=False)
+    is_sent = Column(Boolean, default=False)
+    serial_number = Column(Integer, nullable=False)
+
+    def __str__(self):
+        return f"{self.id},{self.text[:min(20, len(str(self.text)))]}"

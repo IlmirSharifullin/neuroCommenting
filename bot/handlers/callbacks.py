@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
@@ -5,7 +7,7 @@ from aiogram.types import CallbackQuery
 from bot.config import user_running_sessions
 from bot.handlers.commands import get_main_menu
 from bot.handlers.messages import sessions_list_cmd
-from bot.misc import EditSessionState, get_session_info
+from bot.misc import EditSessionState, get_session_info, SetTextState
 from client import Client, ProxyNotFoundError
 from db.models import *
 from bot.keyboards import *
@@ -17,7 +19,7 @@ router = Router(name='callbacks-router')
 async def session_cmd(query: CallbackQuery, callback_data: SessionsCallback):
     await query.answer()
     session = await db.get_client(callback_data.session_id)
-    kb = get_session_edit_keyboard(callback_data.session_id, is_reacting=session.is_reacting)
+    kb = get_session_edit_keyboard(callback_data.session_id, session=session)
     await query.message.edit_text(text=await get_session_info(callback_data.session_id), reply_markup=kb,
                                   parse_mode='html')
 
@@ -71,9 +73,20 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
         await state.clear()
 
         session = await db.get_client(callback_data.session_id)
-        kb = get_session_edit_keyboard(callback_data.session_id, is_reacting=session.is_reacting)
+        kb = get_session_edit_keyboard(callback_data.session_id, session=session)
         await query.message.edit_text(text=await get_session_info(callback_data.session_id), reply_markup=kb,
                                       parse_mode='html')
+    elif callback_data.action == EditAction.IS_NEURO_ON:
+        await db.update_data(callback_data.session_id, is_neuro=True)
+        session = await db.get_client(callback_data.session_id)
+        await query.message.answer(text=await get_session_info(callback_data.session_id),
+                             reply_markup=get_session_edit_keyboard(callback_data.session_id, session=session),
+                             parse_mode='html')
+        await query.message.answer('Режим изменён! Если у аккаунта не указана роль, то укажите её, без роли аккаунт не будет писать комментарии')
+    elif callback_data.action == EditAction.IS_NEURO_OFF:
+        await db.update_data(callback_data.session_id, is_neuro=False)
+        await state.set_state(SetTextState.text)
+        await query.message.answer('Теперь введите текст, который аккаунт будет писать в комментариях')
     else:
         await state.clear()
         await query.message.answer('Пока не работает')

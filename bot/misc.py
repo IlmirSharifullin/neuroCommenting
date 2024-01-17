@@ -20,7 +20,8 @@ class EditAction(IntEnum):
     USERNAME = 9
     ANSWER_POSTS = 10
     IS_REACTING = 11
-
+    IS_NEURO_ON = 12
+    IS_NEURO_OFF = 13
 
 class SessionsCallback(CallbackData, prefix='getsession'):
     page: int
@@ -66,6 +67,10 @@ class AddSessionsState(StatesGroup):
     archive = State()
 
 
+class SetTextState(StatesGroup):
+    text = State()
+
+
 async def get_session_info(session_id):
     session: TgClient = await db.get_client(session_id)
     listening_channels = await db.get_listening_channels(session.id)
@@ -81,7 +86,8 @@ async def get_session_info(session_id):
 Отвечает на пост прождав от {session.min_answer_time} до {session.max_answer_time} секунд
 Отвечает на каждый {session.answer_posts}-й пост в канале
 Прокси: {'<span class="tg-spoiler">' + session.proxy + '</span>' if session.proxy else 'Нет прокси. Без прокси клиент не будет запускаться'}
-Роль: {session.role or ''}
+Режим: {'Нейросеть' if session.is_neuro else 'Готовый текст'}
+{'Роль: ' + (session.role or '') if session.is_neuro else 'Текст: ' + (session.text or '')}
 Список прослушиваемых каналов: '''
     for channel_meta in listening_channels:
         if channel_meta.startswith('+'):

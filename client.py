@@ -312,7 +312,12 @@ class Client:
                     # Reactions are limited in this chat
                     pass
 
-                text = await gpt.get_comment(event.message.message, role=me.role, photo_path=filename)
+                if me.is_neuro:
+                    if not me.role:
+                        return notify_owner(me.owner_id, f'Не указана роль у {me}. Комментарии не могут составляться без роли, можете переключить на режим Готовый Текст, нажав кнопку "Выключить нейросеть"')
+                    text = await gpt.get_comment(event.message.message, role=me.role, photo_path=filename)
+                else:
+                    text = me.text
                 await asyncio.sleep(10)
                 # os.remove(filename)
                 if me.is_premium and me.send_as is not None:

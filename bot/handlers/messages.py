@@ -6,8 +6,9 @@ from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
 from telethon import functions, errors
 
+import db.funcs
 from bot.config import ADMIN_LIST
-from bot.misc import EditSessionState, get_session_info
+from bot.misc import EditSessionState, get_session_info, SetTextState
 from client import Client, ProxyNotFoundError
 from bot.keyboards import *
 from proxies.proxy import Proxy
@@ -41,6 +42,20 @@ async def sessions_list_cmd(message: types.Message, page=1, from_callback=False)
         await message.answer('\n'.join(msg), parse_mode='', reply_markup=kb)
 
 
+@router.message(SetTextState.text)
+async def set_text_cmd(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    session_id = data['session_id']
+
+    session = await db.get_client(session_id)
+    await db.update_data(session_id, text=message.text)
+    await state.clear()
+    await message.answer(text=await get_session_info(session_id),
+                         reply_markup=get_session_edit_keyboard(session_id, session=session),
+                         parse_mode='html')
+    await message.answer('Режим успешно изменён!')
+
+
 @router.message(EditSessionState.val, F.text == 'Отмена')
 async def cancel_edit(message: types.Message, state: FSMContext):
     data = await state.get_data()
@@ -49,7 +64,7 @@ async def cancel_edit(message: types.Message, state: FSMContext):
     session = await db.get_client(session_id)
     await state.clear()
     await message.answer(text=await get_session_info(session_id),
-                         reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting),
+                         reply_markup=get_session_edit_keyboard(session_id, session=session),
                          parse_mode='html')
 
 
@@ -142,7 +157,7 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
         await state.clear()
         session = await db.get_client(session_id)
         await message.answer(text=await get_session_info(session_id),
-                             reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting),
+                             reply_markup=get_session_edit_keyboard(session_id, session=session),
                              parse_mode='html')
         await message.answer('Смена произошла успешно!')
     except ProxyNotFoundError:
@@ -203,7 +218,7 @@ async def get_listen_channels_cmd(message: types.Message, state: FSMContext):
 
             session = await db.get_client(session_id)
             await message.answer(text=await get_session_info(session_id),
-                                 reply_markup=get_session_edit_keyboard(session_id, is_reacting=session.is_reacting),
+                                 reply_markup=get_session_edit_keyboard(session_id, session=session),
                                  parse_mode='html')
             await message.answer('Готово!')
         else:
