@@ -276,13 +276,17 @@ class Client:
     async def message_handler(self, event: events.NewMessage.Event):
         chat = event.chat
         client: TelegramClient = self.client
+
+        await self.communication(event)
+
         if chat.id in self.listening_channels or chat.username in self.listening_channels:
             try:
                 me: TgClient = await db.get_client(self.session_id)
                 filename = None
 
                 if event.message.id % me.answer_posts != 0:
-                    logger.info(f'{me.first_name} {me.last_name} not send {event.message.id} in {chat.username or chat.id}')
+                    logger.info(
+                        f'{me.first_name} {me.last_name} not send {event.message.id} in {chat.username or chat.id}')
                     return
 
                 # if isinstance(event.message.media,
@@ -314,7 +318,8 @@ class Client:
 
                 if me.is_neuro:
                     if not me.role:
-                        return notify_owner(me.owner_id, f'Не указана роль у {me}. Комментарии не могут составляться без роли, можете переключить на режим Готовый Текст, нажав кнопку "Выключить нейросеть"')
+                        return notify_owner(me.owner_id,
+                                            f'Не указана роль у {me}. Комментарии не могут составляться без роли, можете переключить на режим Готовый Текст, нажав кнопку "Выключить нейросеть"')
                     text = await gpt.get_comment(event.message.message, role=me.role, photo_path=filename)
                 else:
                     text = me.text
@@ -369,3 +374,44 @@ class Client:
                         pass
             except Exception as ex:
                 logger.error(traceback.format_exc())
+
+    async def communication(self, event):
+        db_client: TgClient = await db.get_client(self.session_id)
+        if event.message.peer_id.channel_id == 2078563772:
+            if event.message.reply_to:
+                comments_list = await self.get_replied_comments_to_post(event, event.message)
+                if not comments_list:
+                    print('не нам')
+                    return
+                comments_list = comments_list[::-1]
+                comments_list = list(map(lambda x: x.message, comments_list))
+                next_phrase = gpt.get_dialog_phrase(comments_list, db_client.role)
+                print(next_phrase)
+                await self.client.send_message(event.chat, next_phrase, reply_to=event.message)
+
+    async def get_replied_comments_to_post(self, event, last_msg: types.Message) -> list[types.Message] | bool:
+        lst = [last_msg]
+        msg = last_msg
+        first_iter = True
+        me = await self.client.get_entity('me')
+        while msg.reply_to is not None:
+            next_messages = (await self.client.get_messages(event.chat, ids=[msg.reply_to.reply_to_msg_id]))
+            next_message: types.Message = next_messages[0]
+            if first_iter and isinstance(next_message.from_id, types.PeerUser) and next_message.from_id.user_id != me.id:
+                return False
+            lst.append(next_message)
+            msg = next_message
+            first_iter = False
+        return lst
+
+
+# Message(id=941, peer_id=PeerChannel(channel_id=2078563772),
+#         date=datetime.datetime(2024, 1, 18, 10, 1, 29, tzinfo=datetime.timezone.utc), message='да, отлично', out=False,
+#         mentioned=True, media_unread=True, silent=False, post=False, from_scheduled=False, legacy=False,
+#         edit_hide=False, pinned=False, noforwards=False, invert_media=False, from_id=PeerUser(user_id=901977201),
+#         fwd_from=None, via_bot_id=None,
+#         reply_to=MessageReplyHeader(reply_to_scheduled=False, forum_topic=False, quote=False, reply_to_msg_id=940,
+#                                     reply_to_peer_id=None, reply_from=None, reply_media=None, reply_to_top_id=939,
+#                                     quote_text=None, quote_entities=[], quote_offset=None), media=None,
+#         reply_markup=None, entities=[], views=None, forwards=None, replies=None, edit_date=None, post_author=None,
+#         grouped_id=None, reactions=None, restriction_reason=[], ttl_period=None)
