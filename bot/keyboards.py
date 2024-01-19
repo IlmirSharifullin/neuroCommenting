@@ -1,12 +1,10 @@
 import math
-from enum import Enum, IntEnum
 
-from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, WebAppInfo
 
 import db.funcs as db
 from bot.misc import SessionsCallback, TurnSessionsPageCallback, EditSessionCallback, EditAction, \
-    StartStopSessionCallback, UpdateSessionCallback, BackToListCallback, BackToMenuCallback
+    StartStopSessionCallback, UpdateSessionCallback, BackToListCallback
 
 
 def get_icon_by_status(status):
@@ -32,10 +30,8 @@ def get_main_keyboard():
 
 
 def get_main_admin_keyboard():
-    kb = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Сессии'), KeyboardButton(text='Купить сессии'), ],
-                                       [KeyboardButton(text='Поддержка'), KeyboardButton(text='Инфо')],
-                                       [KeyboardButton(text='Добавить сессии')]],
-                             resize_keyboard=True)
+    kb = get_main_keyboard()
+    kb.keyboard.append([KeyboardButton(text='Добавить сессии')])
     return kb
 
 

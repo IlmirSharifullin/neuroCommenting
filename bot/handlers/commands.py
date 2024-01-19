@@ -1,7 +1,6 @@
 from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery
 
 from bot.config import ADMIN_LIST
 from db.models import *

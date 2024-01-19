@@ -28,6 +28,7 @@ class Client:
         self.debug = debug
         self.temp = temp
         self.changing = changing
+        self.me = None
 
     async def init_session(self):
         if self.temp:
@@ -110,10 +111,8 @@ class Client:
         try:
             if not restart:
                 print('in main')
-                username = await self.test_client()
-                # logger.info(f'after test - {self.session_id}')
-                await asyncio.sleep(5)
-
+                self.me = await self.client.get_entity('me')
+                username = self.me.username
                 await db.update_data(self.session_id, username=username)
                 await asyncio.sleep(5)
 
@@ -128,12 +127,8 @@ class Client:
             logger.info(f'{self.session_id} banned while running')
             await self.replace_session()
         except ConnectionError:
-            me = await db.get_client(self.session_id)
-            # await notify_owner(me.owner_id,
-            #                    'Ошибка при подключении к серверам Телеграма. Попробуем еще раз через минуту')
             await self.disconnect()
             await asyncio.sleep(5)
-            # await notify_owner(me.owner_id, 'Пробуем снова')
             await self.run(restart=True)
         except Exception as ex:
             logger.error(traceback.format_exc())
@@ -148,7 +143,7 @@ class Client:
         me: TgClient = await db.get_client(self.session_id)
 
         await db.set_status(self.session_id, db.ClientStatusEnum.JOINING)
-        # logger.info(f'{self.session_id} - started subscribing')
+
         start_time = datetime.datetime.now()
         await self.subscribe_channels()
         logger.info(
@@ -212,7 +207,8 @@ class Client:
         await asyncio.sleep(sleep_time)
 
     async def test_client(self):
-        return (await self.client.get_me()).username
+        self.me = await self.client.get_entity('me')
+        return self.me.username
 
     async def update_db_data(self, fname: str = None, lname: str = None, about: str = None, role: str = None):
         await db.update_data(self.session_id, first_name=fname, last_name=lname, about=about, role=role)
@@ -274,38 +270,27 @@ class Client:
             await self.replace_session()
 
     async def message_handler(self, event: events.NewMessage.Event):
-        chat = event.chat
-        client: TelegramClient = self.client
-
         await self.communication(event)
 
-        if chat.id in self.listening_channels or chat.username in self.listening_channels:
+        if event.chat.id in self.listening_channels:
             try:
                 me: TgClient = await db.get_client(self.session_id)
-                filename = None
 
                 if event.message.id % me.answer_posts != 0:
                     logger.info(
-                        f'{me.first_name} {me.last_name} not send {event.message.id} in {chat.username or chat.id}')
+                        f'{me.first_name} {me.last_name} not send {event.message.id} in {event.chat.username or event.chat.id}')
                     return
 
-                # if isinstance(event.message.media,
-                #               types.MessageMediaPhoto):  # является ли тип вложения сообщения фотографией
-                #     filename = f'temp{datetime.datetime.now()}.jpg'
-                #     await event.message.download_media(file=filename, thumb=-1)
-                logger.info(f'{me.first_name} {me.last_name} new message in {chat.username or chat.title or chat.id}')
-
                 sleep_time = random.randint(me.min_answer_time, me.max_answer_time)
-                print(sleep_time)
                 logger.info(f'{me.first_name} {me.last_name} sleeps for {sleep_time}')
                 await asyncio.sleep(sleep_time)
 
-                await client(
-                    functions.messages.GetMessagesViewsRequest(peer=chat, id=[event.message.id], increment=True))
+                await self.client(
+                    functions.messages.GetMessagesViewsRequest(peer=event.chat, id=[event.message.id], increment=True))
                 await asyncio.sleep(5)
                 try:
-                    res = await client(functions.messages.SendReactionRequest(
-                        peer=chat,
+                    await self.client(functions.messages.SendReactionRequest(
+                        peer=event.chat,
                         msg_id=event.message.id,
                         add_to_recent=True,
                         reaction=[types.ReactionEmoji(
@@ -320,28 +305,27 @@ class Client:
                     if not me.role:
                         return notify_owner(me.owner_id,
                                             f'Не указана роль у {me}. Комментарии не могут составляться без роли, можете переключить на режим Готовый Текст, нажав кнопку "Выключить нейросеть"')
-                    text = await gpt.get_comment(event.message.message, role=me.role, photo_path=filename)
+                    text = gpt.get_comment(event.message.message, role=me.role)
                 else:
                     text = me.text
-                await asyncio.sleep(10)
-                # os.remove(filename)
+
+                await asyncio.sleep(5)
+
                 if me.is_premium and me.send_as is not None:
                     try:
-                        await client(functions.messages.SaveDefaultSendAsRequest(chat, me.send_as))
+                        await self.client(functions.messages.SaveDefaultSendAsRequest(event.chat, me.send_as))
                     except errors.SendAsPeerInvalidError:
-                        # await notify_owner(me.owner_id,
-                        #                    f'У аккаунта {me} указан неправильный юзернейм, от лица которого нужно писать комментарии')
                         pass
                 try:
-                    await client.send_message(chat, text, comment_to=event.message.id)
+                    await self.client.send_message(event.chat, text, comment_to=event.message.id)
                 except errors.ChatGuestSendForbiddenError:
-                    channel = await client(functions.channels.GetFullChannelRequest(chat))
+                    channel = await self.client(functions.channels.GetFullChannelRequest(event.chat))
                     try:
-                        await client(functions.channels.JoinChannelRequest(channel.full_chat.linked_chat_id))
+                        await self.client(functions.channels.JoinChannelRequest(channel.full_chat.linked_chat_id))
                     except errors.InviteRequestSentError:
                         print('Заявка на добавление отправлена')
                         logger.error('Заявка на добавление отправлена')
-                    await client.send_message(chat, text, comment_to=event.message.id)
+                    await self.client.send_message(event.chat, text, comment_to=event.message.id)
             except MsgIdInvalidError as ex:
                 # при посте с несколькими фото прилетает несколько ивентов, обрабатывается только основной с текстом.
                 pass
@@ -349,20 +333,20 @@ class Client:
                 if not self.debug:
                     db_me: TgClient = await db.get_client(self.session_id)
                     await notify_owner(db_me.owner_id,
-                                       f'Сессию {db_me.username} {db_me.first_name} {db_me.last_name} забанили в канале {chat.username or chat.id}. Он больше не может оставлять комментарии под постами.')
+                                       f'Аккаунт {db_me.username} {db_me.first_name} {db_me.last_name} забанили в канале {event.chat.username or event.chat.title or event.chat.id}. Он больше не может оставлять комментарии под постами.')
             except Exception as ex:
                 logger.error(traceback.format_exc())
-        elif not chat.broadcast and chat.megagroup:
+        elif not event.chat.broadcast and event.chat.megagroup:
             session = await db.get_client(self.session_id)
             if not session.is_reacting:
                 return
-            # комментарий
+            # ставим реакции под комментариями
             try:
-                channel = await client(functions.channels.GetFullChannelRequest(chat))
+                channel = await self.client(functions.channels.GetFullChannelRequest(event.chat))
                 if channel and channel.full_chat and channel.full_chat.linked_chat_id and channel.full_chat.linked_chat_id in self.listening_channels:
                     try:
-                        res = await client(functions.messages.SendReactionRequest(
-                            peer=chat,
+                        res = await self.client(functions.messages.SendReactionRequest(
+                            peer=event.chat,
                             msg_id=event.message.id,
                             add_to_recent=True,
                             reaction=[types.ReactionEmoji(
@@ -393,25 +377,16 @@ class Client:
         lst = [last_msg]
         msg = last_msg
         first_iter = True
-        me = await self.client.get_entity('me')
+        if self.me is None:
+            self.me = await self.client.get_entity('me')
         while msg.reply_to is not None:
             next_messages = (await self.client.get_messages(event.chat, ids=[msg.reply_to.reply_to_msg_id]))
             next_message: types.Message = next_messages[0]
-            if first_iter and isinstance(next_message.from_id, types.PeerUser) and next_message.from_id.user_id != me.id:
+            if first_iter and not (isinstance(next_message.from_id,
+                                         types.PeerUser) and next_message.from_id.user_id == self.me.id):
+                # False if this comment is not replying to our account
                 return False
             lst.append(next_message)
             msg = next_message
             first_iter = False
         return lst
-
-
-# Message(id=941, peer_id=PeerChannel(channel_id=2078563772),
-#         date=datetime.datetime(2024, 1, 18, 10, 1, 29, tzinfo=datetime.timezone.utc), message='да, отлично', out=False,
-#         mentioned=True, media_unread=True, silent=False, post=False, from_scheduled=False, legacy=False,
-#         edit_hide=False, pinned=False, noforwards=False, invert_media=False, from_id=PeerUser(user_id=901977201),
-#         fwd_from=None, via_bot_id=None,
-#         reply_to=MessageReplyHeader(reply_to_scheduled=False, forum_topic=False, quote=False, reply_to_msg_id=940,
-#                                     reply_to_peer_id=None, reply_from=None, reply_media=None, reply_to_top_id=939,
-#                                     quote_text=None, quote_entities=[], quote_offset=None), media=None,
-#         reply_markup=None, entities=[], views=None, forwards=None, replies=None, edit_date=None, post_author=None,
-#         grouped_id=None, reactions=None, restriction_reason=[], ttl_period=None)

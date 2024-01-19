@@ -84,7 +84,11 @@ async def polling_main():
     @dp.error()
     async def error_handler(event: ErrorEvent):
         logger.error(traceback.format_exc())
-    await dp.start_polling(bot, bot2)
+
+    if bot2:
+        await dp.start_polling(bot, bot2)
+    else:
+        await dp.start_polling(bot)
 
 
 async def disconnect_all_sessions():
@@ -99,7 +103,8 @@ if __name__ == "__main__":
     running_sessions = []
 
     bot = Bot(BOT_TOKEN, parse_mode='')
-    bot2 = Bot(BOT2_TOKEN, parse_mode='')
+    if BOT2_TOKEN:
+        bot2 = Bot(BOT2_TOKEN, parse_mode='')
     if polling:
         asyncio.run(polling_main())
     else:

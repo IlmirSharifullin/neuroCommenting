@@ -75,7 +75,6 @@ async def edit_state_cmd(message: types.Message, state: FSMContext):
     session_id = data['session_id']
     value = message.text
     try:
-
         if field == EditAction.FIRST_NAME:
             session = Client(session_id, changing=True)
             await session.init_session()

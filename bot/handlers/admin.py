@@ -14,7 +14,7 @@ router = Router(name='admin-router')
 
 @router.message(F.from_user.id.in_(ADMIN_LIST), F.text == 'Добавить сессии')
 async def add_sessions_cmd(message: Message, state: FSMContext):
-    await message.answer('Приложите .zip/.7z архив с папками session+json сессий в нём')
+    await message.answer('Приложите .zip архив с папками session+json сессий в нём')
     await state.set_state(AddSessionsState.archive)
 
 

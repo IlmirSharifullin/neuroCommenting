@@ -50,9 +50,6 @@ class StartStopSessionCallback(CallbackData, prefix='startstopsession'):
 class BackToListCallback(CallbackData, prefix='backtolist'):
     page: int
 
-class BackToMenuCallback(CallbackData, prefix='backtomenu'):
-    pass
-
 
 class EditSessionState(StatesGroup):
     val = State()
