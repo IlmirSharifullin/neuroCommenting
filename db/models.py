@@ -85,6 +85,7 @@ class TgClient(Base):
     send_as = Column(String(255), nullable=True)
     is_neuro = Column(Boolean, default=False)
     text = Column(String, nullable=True)
+    comment_communications = Column(Boolean, default=False)
     owner_id = Column(Integer, ForeignKey('user.chat_id'), nullable=True)
     owner = relationship('User', back_populates='sessions')
 

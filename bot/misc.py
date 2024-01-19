@@ -22,6 +22,7 @@ class EditAction(IntEnum):
     IS_REACTING = 11
     IS_NEURO_ON = 12
     IS_NEURO_OFF = 13
+    COMMUNICATIONS = 14
 
 class SessionsCallback(CallbackData, prefix='getsession'):
     page: int
@@ -83,6 +84,7 @@ async def get_session_info(session_id):
 Отвечает на пост прождав от {session.min_answer_time} до {session.max_answer_time} секунд
 Отвечает на каждый {session.answer_posts}-й пост в канале
 Прокси: {'<span class="tg-spoiler">' + session.proxy + '</span>' if session.proxy else 'Нет прокси. Без прокси клиент не будет запускаться'}
+Общение в комментариях: {'Включено' if session.comment_communications else 'Выключено'}
 Режим: {'Нейросеть' if session.is_neuro else 'Готовый текст'}
 {'Роль: ' + (session.role or '') if session.is_neuro else 'Текст: ' + (session.text or '')}
 Список прослушиваемых каналов: '''

@@ -130,7 +130,7 @@ async def update_data(session_id: str, session: AsyncSession, first_name: str = 
                       about: str = None, role: str = None, proxy: str = None,
                       username: str = None, min_answer_time: int = None, max_answer_time: int = None,
                       answer_posts: int = None, is_premium: bool = False, send_as: str = None,
-                      is_reacting: bool = None, is_neuro: bool = None, text: str = None):
+                      is_reacting: bool = None, is_neuro: bool = None, text: str = None, communications: bool = None):
     client: TgClient = await get_client(session_id)
     await session.execute(
         update(TgClient).filter_by(session_id=session_id)
@@ -148,6 +148,7 @@ async def update_data(session_id: str, session: AsyncSession, first_name: str = 
                 is_reacting=is_reacting or (client.is_reacting if is_reacting is None else False),
                 is_neuro=is_neuro or (client.is_neuro if is_neuro is None else False),
                 text=text or client.text,
+                comment_communications=communications or (client.comment_communications if communications is None else False)
                 ))
 
     return await session.commit()

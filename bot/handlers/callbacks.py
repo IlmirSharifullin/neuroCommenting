@@ -87,6 +87,14 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
         await db.update_data(callback_data.session_id, is_neuro=False)
         await state.set_state(SetTextState.text)
         await query.message.answer('Теперь введите текст, который аккаунт будет писать в комментариях')
+    elif callback_data.action == EditAction.COMMUNICATIONS:
+        session: TgClient = await db.get_client(callback_data.session_id)
+        await db.update_data(callback_data.session_id, communications=not session.comment_communications)
+        await query.answer('Смена произошла успешно!')
+        session: TgClient = await db.get_client(callback_data.session_id)
+
+        new_text = await get_session_info(callback_data.session_id)
+        await query.message.edit_reply_markup(text=new_text, reply_markup=get_session_edit_keyboard(callback_data.session_id, session=session))
     else:
         await state.clear()
         await query.message.answer('Пока не работает')

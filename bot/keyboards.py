@@ -5,6 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeybo
 import db.funcs as db
 from bot.misc import SessionsCallback, TurnSessionsPageCallback, EditSessionCallback, EditAction, \
     StartStopSessionCallback, UpdateSessionCallback, BackToListCallback
+from db.models import TgClient
 
 
 def get_icon_by_status(status):
@@ -65,7 +66,7 @@ def get_sessions_keyboard(clients, page=1):
     return keyboard
 
 
-def get_session_edit_keyboard(session_id: str, session, page: int = 1):
+def get_session_edit_keyboard(session_id: str, session: TgClient, page: int = 1):
     kb = InlineKeyboardMarkup(inline_keyboard=[])
     kb.inline_keyboard = [
         [InlineKeyboardButton(text='Запустить клиент',
@@ -117,7 +118,11 @@ def get_session_edit_keyboard(session_id: str, session, page: int = 1):
             InlineKeyboardButton(
                 text='Выключить нейросеть' if session.is_neuro else 'Включить нейросеть',
                 callback_data=EditSessionCallback(action=EditAction.IS_NEURO_OFF if session.is_neuro else EditAction.IS_NEURO_ON,
-                                                  session_id=session_id).pack())
+                                                  session_id=session_id).pack()),
+            InlineKeyboardButton(
+                text='Выключить общение' if session.comment_communications else 'Включить общение',
+                callback_data=EditSessionCallback(action=EditAction.COMMUNICATIONS, session_id=session_id).pack()
+            )
         ],
         [InlineKeyboardButton(text='Обновить сессию',
                               callback_data=UpdateSessionCallback(session_id=session_id, page=page).pack()),

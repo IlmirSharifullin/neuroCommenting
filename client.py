@@ -270,12 +270,13 @@ class Client:
             await self.replace_session()
 
     async def message_handler(self, event: events.NewMessage.Event):
-        await self.communication(event)
+        me: TgClient = await db.get_client(self.session_id)
+
+        if me.comment_communications:
+            await self.communication(event)
 
         if event.chat.id in self.listening_channels:
             try:
-                me: TgClient = await db.get_client(self.session_id)
-
                 if event.message.id % me.answer_posts != 0:
                     logger.info(
                         f'{me.first_name} {me.last_name} not send {event.message.id} in {event.chat.username or event.chat.id}')
@@ -337,8 +338,7 @@ class Client:
             except Exception as ex:
                 logger.error(traceback.format_exc())
         elif not event.chat.broadcast and event.chat.megagroup:
-            session = await db.get_client(self.session_id)
-            if not session.is_reacting:
+            if not me.is_reacting:
                 return
             # ставим реакции под комментариями
             try:
