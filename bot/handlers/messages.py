@@ -8,7 +8,7 @@ from telethon import functions, errors
 
 import db.funcs
 from bot.config import ADMIN_LIST
-from bot.misc import EditSessionState, get_session_info, SetTextState
+from bot.misc import EditSessionState, get_session_info, SetTextState, SetTemperatureState
 from client import Client, ProxyNotFoundError
 from bot.keyboards import *
 from proxies.proxy import Proxy
@@ -40,6 +40,30 @@ async def sessions_list_cmd(message: types.Message, page=1, from_callback=False)
         await message.edit_text('\n'.join(msg), parse_mode='', reply_markup=kb)
     else:
         await message.answer('\n'.join(msg), parse_mode='', reply_markup=kb)
+
+
+@router.message(SetTemperatureState.temperature)
+async def set_temperature_cmd(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    session_id = data['session_id']
+
+    temp = message.text
+    try:
+        temp = float(temp)
+        temp = round(temp, 2)
+    except Exception as ex:
+        return await message.answer('Введите число от 0 до 1, с разделителем "."')
+    else:
+        if 0 <= temp <= 1:
+            session = await db.get_client(session_id)
+            await db.update_data(session_id, role_temperature=temp)
+            await message.answer(text=await get_session_info(session_id),
+                                 reply_markup=get_session_edit_keyboard(session_id, session=session),
+                                 parse_mode='html')
+            await message.answer('Температура успешно изменена')
+            await state.clear()
+        else:
+            await message.answer('Число должно быть от 0 до 1 включительно')
 
 
 @router.message(SetTextState.text)

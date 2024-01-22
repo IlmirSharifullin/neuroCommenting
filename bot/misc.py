@@ -23,6 +23,8 @@ class EditAction(IntEnum):
     IS_NEURO_ON = 12
     IS_NEURO_OFF = 13
     COMMUNICATIONS = 14
+    TEMPERATURE = 15
+
 
 class SessionsCallback(CallbackData, prefix='getsession'):
     page: int
@@ -69,6 +71,10 @@ class SetTextState(StatesGroup):
     text = State()
 
 
+class SetTemperatureState(StatesGroup):
+    temperature = State()
+
+
 async def get_session_info(session_id):
     session: TgClient = await db.get_client(session_id)
     listening_channels = await db.get_listening_channels(session.id)
@@ -87,6 +93,7 @@ async def get_session_info(session_id):
 Общение в комментариях: {'Включено' if session.comment_communications else 'Выключено'}
 Режим: {'Нейросеть' if session.is_neuro else 'Готовый текст'}
 {'Роль: ' + (session.role or '') if session.is_neuro else 'Текст: ' + (session.text or '')}
+{'Температура роли: ' + str(session.role_temperature) if session.is_neuro else ''}
 Список прослушиваемых каналов: '''
     for channel_meta in listening_channels:
         if channel_meta.startswith('+'):

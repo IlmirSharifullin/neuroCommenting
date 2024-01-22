@@ -124,6 +124,9 @@ def get_session_edit_keyboard(session_id: str, session: TgClient, page: int = 1)
                 callback_data=EditSessionCallback(action=EditAction.COMMUNICATIONS, session_id=session_id).pack()
             )
         ],
+        [
+            InlineKeyboardButton(text='Изменить температуру', callback_data=EditSessionCallback(action=EditAction.TEMPERATURE, session_id=session_id).pack())
+        ],
         [InlineKeyboardButton(text='Обновить сессию',
                               callback_data=UpdateSessionCallback(session_id=session_id, page=page).pack()),
          InlineKeyboardButton(text='Назад', callback_data=BackToListCallback(page=page).pack())

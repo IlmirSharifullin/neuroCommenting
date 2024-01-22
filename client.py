@@ -306,7 +306,7 @@ class Client:
                     if not me.role:
                         return notify_owner(me.owner_id,
                                             f'Не указана роль у {me}. Комментарии не могут составляться без роли, можете переключить на режим Готовый Текст, нажав кнопку "Выключить нейросеть"')
-                    text = gpt.get_comment(event.message.message, role=me.role)
+                    text = gpt.get_comment(event.message.message, role=me.role, temperature=me.role_temperature)
                 else:
                     text = me.text
 
@@ -369,7 +369,7 @@ class Client:
                     return
                 comments_list = comments_list[::-1]
                 comments_list = list(map(lambda x: x.message, comments_list))
-                next_phrase = gpt.get_dialog_phrase(comments_list, db_client.role)
+                next_phrase = gpt.get_dialog_phrase(comments_list, db_client.role, db_client.role_temperature)
                 print(next_phrase)
                 await self.client.send_message(event.chat, next_phrase, reply_to=event.message)
 

@@ -7,7 +7,7 @@ from aiogram.types import CallbackQuery
 from bot.config import user_running_sessions
 from bot.handlers.commands import get_main_menu
 from bot.handlers.messages import sessions_list_cmd
-from bot.misc import EditSessionState, get_session_info, SetTextState
+from bot.misc import EditSessionState, get_session_info, SetTextState, SetTemperatureState
 from client import Client, ProxyNotFoundError
 from db.models import *
 from bot.keyboards import *
@@ -80,9 +80,10 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
         await db.update_data(callback_data.session_id, is_neuro=True)
         session = await db.get_client(callback_data.session_id)
         await query.message.answer(text=await get_session_info(callback_data.session_id),
-                             reply_markup=get_session_edit_keyboard(callback_data.session_id, session=session),
-                             parse_mode='html')
-        await query.message.answer('Режим изменён! Если у аккаунта не указана роль, то укажите её, без роли аккаунт не будет писать комментарии')
+                                   reply_markup=get_session_edit_keyboard(callback_data.session_id, session=session),
+                                   parse_mode='html')
+        await query.message.answer(
+            'Режим изменён! Если у аккаунта не указана роль, то укажите её, без роли аккаунт не будет писать комментарии')
     elif callback_data.action == EditAction.IS_NEURO_OFF:
         await db.update_data(callback_data.session_id, is_neuro=False)
         await state.set_state(SetTextState.text)
@@ -94,7 +95,12 @@ async def edit_session(query: CallbackQuery, callback_data: EditSessionCallback,
         session: TgClient = await db.get_client(callback_data.session_id)
 
         new_text = await get_session_info(callback_data.session_id)
-        await query.message.edit_reply_markup(text=new_text, reply_markup=get_session_edit_keyboard(callback_data.session_id, session=session))
+        await query.message.edit_reply_markup(text=new_text,
+                                              reply_markup=get_session_edit_keyboard(callback_data.session_id,
+                                                                                     session=session))
+    elif callback_data.action == EditAction.TEMPERATURE:
+        await state.set_state(SetTemperatureState.temperature)
+        await query.message.answer('Теперь введите число от 0 до 1 с разделителем ".", означающее температуру роли, передаваемой нейросети. Например: 0.5, 0.25, 0.37 (округляется до сотых)')
     else:
         await state.clear()
         await query.message.answer('Пока не работает')
@@ -115,7 +121,8 @@ async def start_session(query: CallbackQuery, callback_data: StartStopSessionCal
     try:
         await client.init_session()
     except ProxyNotFoundError:
-        return await query.message.answer('У клиента не установлен прокси. Без прокси мы не можем запустить его для просмотра каналов.')
+        return await query.message.answer(
+            'У клиента не установлен прокси. Без прокси мы не можем запустить его для просмотра каналов.')
     running_sessions.append(client)
     user_running_sessions[query.from_user.id] = running_sessions
 
@@ -157,7 +164,8 @@ async def update_session(query: CallbackQuery, callback_data: UpdateSessionCallb
                              is_premium=me.premium)
         await client.disconnect()
     except ProxyNotFoundError:
-        return await query.message.answer('Без прокси мы не можем присоединяться к аккаунту для изменения профиля и тп. Добавьте прокси чтобы продолжить')
+        return await query.message.answer(
+            'Без прокси мы не можем присоединяться к аккаунту для изменения профиля и тп. Добавьте прокси чтобы продолжить')
 
     await query.answer('Сессия обновлена!')
     await session_cmd(query, callback_data)

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from sqlalchemy import String, Integer, Column, Table, ForeignKey, UniqueConstraint, Boolean
+from sqlalchemy import String, Integer, Column, Table, ForeignKey, UniqueConstraint, Boolean, Float
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
@@ -76,6 +76,7 @@ class TgClient(Base):
     last_name = Column(String(255))
     about = Column(String())
     role = Column(String(), nullable=True)
+    role_temperature = Column(Float, default=0.5)
     proxy = Column(String(255), nullable=True)
     min_answer_time = Column(Integer(), default=30)
     max_answer_time = Column(Integer(), default=300)
